@@ -4,6 +4,7 @@ Custom discord bot made for a small server of close friends, has a few Dungeons 
 NOTES: requires two personal files, a .env and a ddc.txt that are excluded from the repo for privacy reasons
 
 COMMANDS:
+
 	!changelog
 		Sends the changelog for the most recent version of the bot
 	!condition
