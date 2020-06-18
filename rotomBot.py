@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import os
+import rotom_mod
 
 import random
 import math
@@ -12,151 +13,323 @@ load_dotenv()
 #guild_id = os.getenv('GUILD_ID') #Actual server
 #guild_id = os.getenv('TEST_ID') #Test server
 
-locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone"]
-#locked_roles = ["CANNOT_ADD", "@everyone"]
-base_activity = discord.Game(name="the ~help waiting game")
+#locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS"]
+locked_roles = ["CANNOT_ADD", "@everyone"]
+base_activity = discord.Game(name="the !help waiting game")
 
-bot = commands.Bot(command_prefix="~", status="online", activity=base_activity)
+#on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.0 SUCCESSFULLY LOADED```"
+on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
-@bot.command(help="Repeat any phrase", usage="[input]")
-async def repeat(ctx, *, inp):			#test function that repeats the input
-	await ctx.message.delete()
-	await ctx.send(inp)
+bot = commands.Bot(command_prefix="!", status="online", activity=base_activity)
 
-@bot.command(help="Roll a d20", usage="d[die size]")
-async def roll(ctx, *, inp):			#die roll function
-	if inp == None:
-		roll = random.randint(1, 20)
-	else:
-		roll = random.randint(1, int(inp[1:]))
-	await ctx.send(ctx.message.author.display_name + " - " + str(roll))
+global init_list
+global curr_player
+global dm
 
 @bot.event							
 async def on_ready():					#called at bot startup
 	guild = bot.get_guild(guild_id)
 	chan = discord.utils.get(guild.text_channels, name="general")
 	await bot.change_presence(activity=base_activity, status="online")
-	await chan.send("ACTIVATING ROTOM BOT\nVERSION 1.0 SUCCESSFULLY LOADED\n")
-
-@bot.command(help="Shows either full or most recent update changelog", usage="[current or full]")		
-async def changelog(ctx, *inp):			#command to view changelog
-	if inp[0] == "full":
-		chlg = "```"
-		chlg += open("changelog.txt").read()
-		chlg += " ```"
-		await ctx.send(chlg)
-	elif inp[0] == "current":
-		chlg = "```"
-		with open("changelog.txt", 'r') as file:
-			line = file.readline()
-			while line != "***CURRENT VERSION***\n":
-				line = file.readline()
-			
-			while line != "":
-				line = file.readline()
-				chlg += line
-		chlg += "```"
-		await ctx.send(chlg)
-
-@bot.command(help="Shows all non-locked roles", usage= "")
-async def roles(ctx, *inp):				#command to show all requestable roles
-	guild = bot.get_guild(guild_id)
-	rolelist = guild.roles
-	toPrint = "```***Requestable roles***\n\n"
-	
-	for i in locked_roles:
-		for j in rolelist:
-			if i == j.name:
-				rolelist.remove(j)
-
-	for i in rolelist:
-		toPrint += i.name
-		toPrint += "\n"
-
-	toPrint += "```"
-	await ctx.send(toPrint)
-
-@bot.command(help="Request a role (use ~roles first!)", usage="[role]")
-async def reqrole(ctx, *, inp):			#command to request a role
-	guild = bot.get_guild(guild_id)
-	rolelist = guild.roles
-	memRoleList = ctx.message.author.roles
-
-	isActualRole = 0
-	isLockedRole = 0
-	hasRole = 0
-	reqRole = discord.Role
-
-	for i in locked_roles:
-		if i == inp:
-			isLockedRole = 1
-
-	for i in memRoleList:
-		if i.name == inp:
-			hasRole = 1
-
-	for i in rolelist:
-		if i.name == inp:
-			isActualRole = 1
-			reqRole = i
-
-	if isActualRole != 1:
-		await ctx.send("Role not recognized")
-	elif hasRole:
-		await ctx.send("You already have this role")
-	elif isLockedRole:
-		await ctx.send("You must ask an admin if you want this role")
-	else:
-		await ctx.message.author.add_roles(reqRole)
-		await ctx.send("One role coming right up!")
+	await chan.send(on_text)
 
 @bot.event
 async def on_member_join(mem):			#sends introductory dm to new members
-	msg = "Hello! Welcome to our lovely server! We hope you enjoy your time here. :smile: \n"
-	msg += "Before you do anything, I recommend you mute `#music-control` so you're not bombarded by music notifications."
-	msg += "To do this, just click the bell at the top of the window while looking at `#music-control`.\n\n"
-	msg += "Also, a bunch of channels are currently hidden behind some roles."
-	msg += "This is so that your not bombarded by notifications for games you don't care about."
-	msg += "If there are games/hidden channels you want to be a part of, type `~roles` to view all of the roles you can request, "
-	msg += "then type `~reqrole [role]` to recieve that role.\n\n"
-	msg += "I know that's a lot of information, but you only have to worry about this once.\n"
-	msg += "Anyhow, that's all I have to say, so I'll leave you off here!\n"
-	msg += "Remember to type `~help` in any channel in the server if you want to know what I can do!"
-	await mem.send(msg)
+	await mem.send(rotom_mod.mem_join_text())
 
-@bot.command(help="Destroyed dimension counter (for fellowship members only)", usage="[add, sub]")
-async def ddc(ctx, *, inp):				#destroyed dimension counter
-	intcount = int(open("ddc.txt").read())
-	memRoleList = ctx.message.author.roles
-	hasRole = 0
 
-	for i in memRoleList:
-		if i.name == "fellowship":
-			hasRole = 1
+class dnd(commands.Cog, name="DND related"):
+	def _init_(self, bot):
+		self.bot = bot
 
-	if hasRole == 1:
-		if inp == "add":
+	@commands.command(help=rotom_mod.roll_help_text(), brief="Roll a die with or without a modifier", usage="d[die size] +/- [modifier]")
+	async def roll(self, ctx, *, inp=None):
+		test = "Rolling "
+		if inp == None:
+			test += "d20"
+			roll = random.randint(1, 20)
+		else:
+			if "+" in inp:
+				temp = inp.split('+')
+				die = temp[0].strip()
+				mod = int(temp[1].strip())
+				hold = " + " + str(mod)
+			elif "-" in inp:
+				temp = inp.split('-')
+				die = temp[0].strip()
+				mod = int(temp[1].strip()) * -1
+				hold = " - " + str(mod * -1)
+			else:
+				die = inp.strip()
+				mod = 0
+				hold = ""
+			if die.startswith('d'):
+				die = die[1:]
+			test += "d" + die + hold
+			die = int(die)
+			roll = random.randint(1, die) + mod
+		await ctx.send(test + "\n" + ctx.message.author.display_name + " - " + str(roll))
+
+	@commands.group(help="Destroyed dimension counter (for fellowship members only)", usage="[add, sub]")
+	async def ddc(self, ctx):
+		if ctx.invoked_subcommand is None:
+			await ctx.send("Need further instruction. Use `!help ddc` for further help.")			
+	@ddc.command(help="View the current destroyed dimension counter")
+	async def view(ctx):
+		intcount = int(open("ddc.txt").read())
+		memRoleList = ctx.message.author.roles
+		hasRole = 0
+		for i in memRoleList:
+			if i.name == "fellowship":
+				hasRole = 1
+
+		if hasRole == 1:
+			text = "Many dimensions have been lost...\nSo far, " + str(intcount) + " to be exact."
+			await ctx.send(text)
+		else:
+			await ctx.send("Sorry, only a fellowship member can use this function")
+	@ddc.command(help="Add to the destroyed dimension counter")
+	async def add(ctx):
+		intcount = int(open("ddc.txt").read())
+		memRoleList = ctx.message.author.roles
+		hasRole = 0
+		for i in memRoleList:
+			if i.name == "fellowship":
+				hasRole = 1	
+		if hasRole == 1:
 			intcount += 1
 			file = open("ddc.txt", "w")
 			file.write(str(intcount))
 			text = "Another dimension lost...\nThat makes " + str(intcount) + " dimensions lost to darkness."
 			await ctx.send(text)
 			file.close()
-
-		elif inp == "sub":
+		else:
+			await ctx.send("Sorry, only a fellowship member can use this function")
+	@ddc.command(help="Subtract from the destroyed dimension counter")
+	async def sub(ctx):
+		intcount = int(open("ddc.txt").read())
+		memRoleList = ctx.message.author.roles
+		hasRole = 0
+		for i in memRoleList:
+			if i.name == "fellowship":
+				hasRole = 1	
+		if hasRole == 1:
 			intcount -= 1
 			file = open("ddc.txt", "w")
 			file.write(str(intcount))
 			text = "A dimension rises from the ashes of another...\nNow, " + str(intcount) + " dimensions survive."
 			await ctx.send(text)
 			file.close()
-
-		elif inp == "view":
-			text = "Many dimensions have been lost...\nSo far, " + str(intcount) + " to be exact."
-			await ctx.send(text)
 		else:
-			await ctx.send("Command not recognized")
-	else:
-		await ctx.send("Sorry, only a fellowship member can use this function")
+			await ctx.send("Sorry, only a fellowship member can use this function")
+
+	@commands.group(help=rotom_mod.init_help_text(), brief="Initiative tracker", usage="[start, add, remove, view, next]")
+	async def init(self, ctx):
+		if ctx.invoked_subcommand is None:
+			await ctx.send("Need further instruction. Use `!help init` for further help.")
+	@init.command(help=rotom_mod.init_start_help_text(), brief="Initiates a new initiative")
+	async def start(self, ctx):
+		global init_list
+		global curr_player
+		global dm
+		init_list = []
+		curr_player = 0
+		dm = ctx.message.author
+		await ctx.send("New initiative has been started.\nUse `!init add` to add players or other creatures into it")
+	@init.command(help=rotom_mod.init_add_help_text(), brief="Add to the initiative order", usage="[name] [initiative roll].[DEX modifier]")
+	async def add(ctx, name, init_roll):								#idk why tf this doesnt wanna take self anymore but it doesnt
+		global init_list
+		temp = rotom_mod.Creature(name, init_roll)
+		init_list.append(temp)
+		init_list.sort(key=lambda varname:varname.initiative, reverse=True)
+		toPrint = name + " has been added to the initiative."
+		await ctx.send(toPrint)
+	@init.command(help="Remove from the initiative order", usage="[name]")
+	async def remove(ctx, name): #no want self
+		global init_list
+		canRemove = False
+		index = None
+		for i in init_list:
+			if i.name == name and canRemove == False:
+				canRemove = True
+				index = init_list.index(i)
+		if canRemove:
+			del init_list[index]
+			toPrint = "```" + name + " has been removed from the initiative.```"
+		else:
+			toPrint = "```" + name + " not in initiative order.```"
+		await ctx.send(toPrint)
+	@init.command(help="View the full initiative order")
+	async def view(self, ctx):
+		global init_list
+		global curr_player
+		toPrint = "```***Initiative order***\n"
+		for i in init_list:
+			if curr_player == init_list.index(i):
+				toPrint += "⬐ Taking their turn\n"
+			toPrint += i.name
+			if i.hasCond:
+				toPrint += " - " + i.condition.upper()
+			toPrint += "\n"
+			if curr_player == init_list.index(i):
+				toPrint += "⬑ Taking their turn\n"
+		toPrint += "```"
+		await ctx.send(toPrint)
+	@init.command(help=rotom_mod.init_next_help_text(), brief="Continue the initiative order")
+	async def next(self, ctx):
+		global init_list
+		global curr_player
+		init_list[curr_player].update()
+		curr_player += 1
+		if curr_player >= len(init_list):
+			curr_player = 0
+		toPrint = "```" + init_list[curr_player].name + " is now taking their turn. "
+		if init_list[curr_player].hasCond:
+			toPrint += init_list[curr_player].name + " is currently " + init_list[curr_player].condition + "."
+		toPrint +="```"
+		await ctx.send(toPrint)
+
+	@commands.group(help=rotom_mod.condition_help_text(), brief="Condition tracker (Must be used alongside the initiative tracker)", usage="[add, remove]")
+	async def condition(self, ctx):
+		if ctx.invoked_subcommand is None:
+			await ctx.send("Need further instruction. Use `!help condition` for further help.")
+	@condition.command(help=rotom_mod.condition_add_help_text(), brief="Add a condition to a creature", usage="[name] [condition] [turns]")
+	async def add(self, ctx, name, cond, turns=-1):
+		global init_list
+		checker = False
+		for i in init_list:
+			if i.name == name:
+				checker = True
+				i.condition = cond
+				i.conditionDuration = int(turns)
+				i.hasCond = True
+				if turns == -1:
+					await ctx.send(name + " has been " + cond + " indefinitely!")
+				else:
+					await ctx.send(name + " has been " + cond + " for the next " + str(turns) + " turns!")
+		if not checker:
+			await ctx.send("Creature was not found.")
+	@condition.command(help="Removes a creature's condition", usage="[name]")
+	async def remove(self, ctx, name):			#also doesnt want self ig
+		global init_list
+		doesExist = False
+		index = None
+		for i in init_list:
+			if i.name == name:
+				doesExist = True
+				index = init_list.index(i)
+		if not doesExist:
+			await ctx.send(name + " is not in the initiaive order.")
+		elif init_list[index].hasCond == False:
+			await ctx.send(name + " does not have a condition.")
+		else:
+			init_list[index].hasCond = False
+			init_list[index].condition = None
+			init_list[index].conditionDuration = 0
+			await ctx.send(name + "'s condition has been removed.")
+
+
+class server(commands.Cog, name="Server/Bot Related"):
+	def _init_(self, bot):
+		self.bot = bot
+
+	@commands.group(help="Role commands", usage="[view, request]")
+	async def role(self, ctx):
+		if ctx.invoked_subcommand is None:
+			await ctx.send("Need further instruction. Use `!help role` for further help.")
+	@role.command(help="View unlocked roles")
+	async def view(self, ctx):
+		guild = bot.get_guild(guild_id)
+		rolelist = guild.roles
+		toPrint = "```***Requestable roles***\n\n"		
+		for i in locked_roles:
+			for j in rolelist:
+				if i == j.name:
+					rolelist.remove(j)
+		for i in rolelist:
+			toPrint += i.name
+			toPrint += "\n"
+		toPrint += "```"
+		await ctx.send(toPrint)
+	@role.command(help="Request a role")
+	async def request(self, ctx, inp):
+		guild = bot.get_guild(guild_id)
+		rolelist = guild.roles
+		memRoleList = ctx.message.author.roles
+		isActualRole = 0
+		isLockedRole = 0
+		hasRole = 0
+		reqRole = discord.Role
+		for i in locked_roles:
+			if i == inp:
+				isLockedRole = 1
+		for i in memRoleList:
+			if i.name == inp:
+				hasRole = 1
+		for i in rolelist:
+			if i.name == inp:
+				isActualRole = 1
+				reqRole = i
+		if isActualRole != 1:
+			await ctx.send("Role not recognized")
+		elif hasRole:
+			await ctx.send("You already have this role")
+		elif isLockedRole:
+			await ctx.send("You must ask an admin if you want this role")
+		else:
+			await ctx.message.author.add_roles(reqRole)
+			await ctx.send("One role coming right up!")
+	@role.command(help="Remove a role from yourself")
+	async def remove(self, ctx, inp):
+		hasRole = False
+		memRoleList = ctx.message.author.roles
+		remRole = discord.Role
+		for i in memRoleList:
+			if i.name == inp:
+				hasRole = True
+				remRole = i
+		if not hasRole:
+			await ctx.send("You do not have the requested role.")
+		else:
+			await ctx.message.author.remove_roles(remRole)
+			await ctx.send("Role removed. Sorry to see you go :pensive:")
+
+	@commands.command(help="Prints the current version's changelog")
+	async def changelog(self, ctx):
+		chlg = "```"
+		with open("changelog.txt", 'r') as file:
+			line = file.readline()
+			while line != "***CURRENT VERSION***\n":
+				line = file.readline()
+			while line != "":
+				line = file.readline()
+				if len(line) + len(chlg) >= 1990:
+					await ctx.send(chlg + "```")
+					chlg = "```" + line
+				else:
+					chlg += line
+			await ctx.send(chlg + "```")
+
+	@commands.command(hidden=True)
+	async def shutdown(self, ctx):
+		if await bot.is_owner(ctx.message.author):
+			await ctx.message.delete()
+			await ctx.send("```ROTOM BOT SHUTTING DOWN```")
+			await bot.logout()
+
+
+class misc(commands.Cog, name="Miscellanious"):
+	def _init_(self, bot):
+		self.bot = bot
+
+	@commands.command(help="repeat any phrase")
+	async def repeat(self, ctx, *, inp):
+		await ctx.message.delete()
+		await ctx.send(inp)
+
+
+bot.add_cog(server())
+bot.add_cog(dnd())
+bot.add_cog(misc())
 
 bot.run(TOKEN)
