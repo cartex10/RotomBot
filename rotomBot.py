@@ -13,25 +13,30 @@ load_dotenv()
 #guild_id = os.getenv('GUILD_ID') #Actual server
 #guild_id = os.getenv('TEST_ID') #Test server
 
-#locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS"]
-locked_roles = ["CANNOT_ADD", "@everyone"]
+locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS"]
+#locked_roles = ["CANNOT_ADD", "@everyone"]
 base_activity = discord.Game(name="the !help waiting game")
 
-#on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.0 SUCCESSFULLY LOADED```"
-on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
+on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.1 SUCCESSFULLY LOADED```"
+#on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
 bot = commands.Bot(command_prefix="!", status="online", activity=base_activity)
 
 global init_list
 global curr_player
 global dm
+global on_check
+on_check = False
 
 @bot.event							
 async def on_ready():					#called at bot startup
+	global on_check
 	guild = bot.get_guild(guild_id)
 	chan = discord.utils.get(guild.text_channels, name="general")
 	await bot.change_presence(activity=base_activity, status="online")
-	await chan.send(on_text)
+	if on_check == False:
+		on_check = True
+		await chan.send(on_text)
 
 @bot.event
 async def on_member_join(mem):			#sends introductory dm to new members
