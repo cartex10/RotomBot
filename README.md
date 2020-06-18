@@ -21,3 +21,7 @@ COMMANDS:
 		Either shows requestable roles or adds/removes available roles
 	!roll
 		Rolls any specified die with any modifier
+		
+EXTRA FEATURES:
+
+	Sends introductory message to new members
