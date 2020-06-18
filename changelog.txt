@@ -1,0 +1,78 @@
+alpha v1.0 release - 5/15/20
+	*basically just for testing basic bot connectivity
+	*used to learn basic structure of programming a bot
+	*only the bare minimum
+	-add repeat command
+	-add simple roll command only working on d20
+	-add simple on_ready command
+
+alpha v1.1 release - 5/16/20
+	-fix roll command
+	-separate testing bot and actual bot
+		*this way, I can test a future version of the bot while the other one runs without clogging up the server
+	-edit on_ready command to send as one message to not clog up notifications
+	-set base activity
+	-add changelog command
+	-add help strings to previous commands
+
+v1.0 release - 5/18/20
+	New Commands:
+	-add ~roles to show requestable roles
+	-add ~reqrole for members to request accessible roles
+	-add ~ddc command for members with fellowship role
+		*can save, set, add, or sub(tract) from the counter
+		*for fellowship members only
+
+	Command edits:
+	-edit ~repeat to delete message calling it
+	-edit ~changelog to either send full or recent update changelog
+	-edit ~roll
+		*now specifies which user called it
+		*can now specify which die to roll with no limit
+
+	Misc:
+	-add function whenever a member joins to message them important info
+		*explain ~roles and ~reqrole commands
+		*recommend to mute #music-control
+	-edit on_ready message now that RotomBot is no longer in testing/alpha
+	-edit on_ready status now that RotomBot is fully released
+
+***CURRENT VERSION***
+v2.0 release - 6/6/20 - THE DND UPDATE
+This was a MASSIVE update, over doubling the lines of code from an already big file of 160 lines to a whopping ~340 lines, and that doesn't even include the separate file that contains a bunch of lines of text for the help menu and other smaller stuff like that. Not only are there more commands that do more, but I've changed the way every command is coded, so less messageless errors will occur, and the help menu is a billion times more helpful. Also, this'll be the first version that I'm gonna be running indefinitely off my laptop. This'll probably cause issues, but I'm hoping everything runs smoothly. I hope you guys enjoy, and make sure to send me suggestions on what else the bot should be able to do! 
+
+	New Commands:
+	!init
+		*An initiative tracker! This is easily the most complex command written so far, and probably the most useful
+		*Make sure to use ~help init since I made sure to explain as much as I could, since its so complex
+	!condition
+		*In addition to the initiative tracker, there's now a condition tracker to go along with it!
+		*This tracker works in conjunction with the initiative tracker, so it won't work if no initiative is being tracked
+	!role
+		*a combination of the previous ~roles and ~reqrole commands (now !role view and !role request respectively)
+		*now also includes a removal command - !role remove
+	-add a secret command only I can use ;)
+
+
+	Command edits:
+	!roll
+		*now takes the die size with or without the d ;)
+		*now also takes modifiers, whether negative or positive
+		*also also, it show exactly the roll being performed
+	!help is a lot more robust, especially for commands with multiple subcommands
+	-add a bunch of more in depth help text to a bunch of commands
+
+	Misc:
+	-changed command prefix from ~ to !
+	-now running indefinitely off a separate "server"
+	-move commands into cogs and groups
+		*front-end-wise, you guys will probably see no big difference, but this is pretty cool back-end-wise
+		*biggest change users will see is through a much better help menu
+	-made a separate module file to declutter the main rotombot file of random text
+		*literally no one but me is gonna care about this LOL
+	-edit member join message to accomodate role function edits
+	-edit on_ready message formatting
+
+v2.1 release - 6/11/20:
+	-edit on_ready() message to only send once
+	-fix !init remove
