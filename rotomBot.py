@@ -10,8 +10,8 @@ import math
 load_dotenv()
 #TOKEN = os.getenv('DISCORD_TOKEN')		#Actual bot token
 #TOKEN = os.getenv('TEST_TOKEN')		#Test bot token
-#guild_id = os.getenv('GUILD_ID') #Actual server
-#guild_id = os.getenv('TEST_ID') #Test server
+#guild_id = int(os.getenv('GUILD_ID')) #Actual server
+#guild_id = int(os.getenv('TEST_ID')) #Test server
 
 locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS"]
 #locked_roles = ["CANNOT_ADD", "@everyone"]
