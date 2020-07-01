@@ -4,6 +4,7 @@ Custom discord bot made for a small server of close friends, has a few Dungeons 
 NOTES: requires two personal files, a .env and a ddc.txt that are excluded from the repo for privacy reasons
 
 COMMANDS:
+
 	!changelog
 		Sends the changelog for the most recent version of the bot
 	!condition
@@ -20,3 +21,7 @@ COMMANDS:
 		Either shows requestable roles or adds/removes available roles
 	!roll
 		Rolls any specified die with any modifier
+		
+EXTRA FEATURES:
+
+	Sends introductory message to new members
