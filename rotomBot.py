@@ -17,7 +17,7 @@ locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@ev
 #locked_roles = ["CANNOT_ADD", "@everyone"]
 base_activity = discord.Game(name="the !help waiting game")
 
-on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.1 SUCCESSFULLY LOADED```"
+on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.2 SUCCESSFULLY LOADED```"
 #on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
 bot = commands.Bot(command_prefix="!", status="online", activity=base_activity)
@@ -37,6 +37,7 @@ async def on_ready():					#called at bot startup
 	if on_check == False:
 		on_check = True
 		await chan.send(on_text)
+		#await rotom_mod.opupdater()
 
 @bot.event
 async def on_member_join(mem):			#sends introductory dm to new members
@@ -68,7 +69,7 @@ class dnd(commands.Cog, name="DND related"):
 				die = inp.strip()
 				mod = 0
 				hold = ""
-			if die.startswith('d'):
+			if die.startswith('d') or die.startswith('D'):
 				die = die[1:]
 			test += "d" + die + hold
 			die = int(die)
@@ -172,7 +173,7 @@ class dnd(commands.Cog, name="DND related"):
 		for i in init_list:
 			if curr_player == init_list.index(i):
 				toPrint += "⬐ Taking their turn\n"
-			toPrint += i.name
+			toPrint += i.name + " - " + str(i.initiative)[:-2]
 			if i.hasCond:
 				toPrint += " - " + i.condition.upper()
 			toPrint += "\n"

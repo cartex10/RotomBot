@@ -76,3 +76,8 @@ This was a MASSIVE update, over doubling the lines of code from an already big f
 v2.1 release - 6/11/20:
 	-edit on_ready() message to only send once
 	-fix !init remove
+
+v2.2 release - 7/1/20:
+	-edit !roll to also receive "D" before die size
+	-edit !init view to show players' rolls
+	-fix !init add to save the correct initiative order
