@@ -187,7 +187,7 @@ class dnd(commands.Cog, name="DND related"):
 		global curr_player
 		init_list[curr_player].update()
 		curr_player += 1
-		if curr_player >= len(init_list):
+		if curr_player >= len(init_list)-1:
 			curr_player = 0
 		toPrint = "```" + init_list[curr_player].name + " is now taking their turn. "
 		if init_list[curr_player].hasCond:
