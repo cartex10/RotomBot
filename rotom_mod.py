@@ -1,4 +1,4 @@
-import aiohttp, asyncio, bs4
+import aiohttp, asyncio, discord
 
 class Creature:
 	name = "None"
@@ -74,13 +74,3 @@ def condition_add_help_text():
 	text = "If you want to add an initiative indefinitely, omit the [turns] part of the command.\n"
 	text = "Turns decrease at the end of a creature's turn, if you want the condition to end at the start, make it last one turn less."
 	return text
-
-async def opupdater():
-	while True:
-		async with aiohttp.ClientSession() as opsession:
- 			async with opsession.get('https://www.reddit.com/r/OnePiece/') as opr:
- 				res = await opr.text()
- 				ingredients = res.select('._eYtD2XCVieq6emjKBH3m')
- 				print(str(ingredients[0].getText()))
- 				#print(goodstuff)
- 				await asyncio.sleep(100000000)
