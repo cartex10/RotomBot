@@ -2,23 +2,23 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import os
-import rotom_mod
+from rotom_mod import *
 
 import random
 import math
 
 load_dotenv()
 #TOKEN = os.getenv('DISCORD_TOKEN')		#Actual bot token
-#TOKEN = os.getenv('TEST_TOKEN')		#Test bot token
+TOKEN = os.getenv('TEST_TOKEN')		#Test bot token
 #guild_id = int(os.getenv('GUILD_ID')) #Actual server
-#guild_id = int(os.getenv('TEST_ID')) #Test server
+guild_id = int(os.getenv('TEST_ID')) #Test server
 
-locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS"]
-#locked_roles = ["CANNOT_ADD", "@everyone"]
+#locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS"]
+locked_roles = ["CANNOT_ADD", "@everyone"]
 base_activity = discord.Game(name="the !help waiting game")
 
-on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.2 SUCCESSFULLY LOADED```"
-#on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
+#on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.2 SUCCESSFULLY LOADED```"
+on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
 bot = commands.Bot(command_prefix="!", status="online", activity=base_activity)
 
@@ -27,28 +27,49 @@ global curr_player
 global dm
 global on_check
 on_check = False
+global opchapter
+opchapter = 987
 
 @bot.event							
 async def on_ready():					#called at bot startup
 	global on_check
+	global opchapter
 	guild = bot.get_guild(guild_id)
 	chan = discord.utils.get(guild.text_channels, name="general")
 	await bot.change_presence(activity=base_activity, status="online")
 	if on_check == False:
 		on_check = True
 		await chan.send(on_text)
-		#await rotom_mod.opupdater()
+		#OP Chapter notifier
+		first = True
+		while True:
+			async with aiohttp.ClientSession() as opsession:
+ 				async with opsession.get('https://www.reddit.com/r/OnePiece/') as opr:
+ 					res = await opr.text()
+ 					yea = res.find('<h3 class="_eYtD2XCVieq6emjKBH3m">')
+ 					res = res[yea+34:yea+56]
+ 					if first:
+ 						first = False
+ 						opchapter = res[:-3]
+ 					elif res[:-3] != str(opchapter):
+ 						text = "A new chapter has been released!"
+ 						embed = discord.Embed(title=text, color=3447003)
+ 						embed.add_field(name="Link", value="https://www.reddit.com/r/OnePiece/")
+ 						guild = bot.get_guild(guild_id)
+ 						chan = discord.utils.get(guild.text_channels, name="one-piece")
+ 						await chan.send(embed=embed)
+ 					await asyncio.sleep(10)
 
 @bot.event
 async def on_member_join(mem):			#sends introductory dm to new members
-	await mem.send(rotom_mod.mem_join_text())
+	await mem.send(mem_join_text())
 
 
 class dnd(commands.Cog, name="DND related"):
 	def _init_(self, bot):
 		self.bot = bot
 
-	@commands.command(help=rotom_mod.roll_help_text(), brief="Roll a die with or without a modifier", usage="d[die size] +/- [modifier]")
+	@commands.command(help=roll_help_text(), brief="Roll a die with or without a modifier", usage="d[die size] +/- [modifier]")
 	async def roll(self, ctx, *, inp=None):
 		test = "Rolling "
 		if inp == None:
@@ -129,11 +150,11 @@ class dnd(commands.Cog, name="DND related"):
 		else:
 			await ctx.send("Sorry, only a fellowship member can use this function")
 
-	@commands.group(help=rotom_mod.init_help_text(), brief="Initiative tracker", usage="[start, add, remove, view, next]")
+	@commands.group(help=init_help_text(), brief="Initiative tracker", usage="[start, add, remove, view, next]")
 	async def init(self, ctx):
 		if ctx.invoked_subcommand is None:
 			await ctx.send("Need further instruction. Use `!help init` for further help.")
-	@init.command(help=rotom_mod.init_start_help_text(), brief="Initiates a new initiative")
+	@init.command(help=init_start_help_text(), brief="Initiates a new initiative")
 	async def start(self, ctx):
 		global init_list
 		global curr_player
@@ -142,10 +163,10 @@ class dnd(commands.Cog, name="DND related"):
 		curr_player = 0
 		dm = ctx.message.author
 		await ctx.send("New initiative has been started.\nUse `!init add` to add players or other creatures into it")
-	@init.command(help=rotom_mod.init_add_help_text(), brief="Add to the initiative order", usage="[name] [initiative roll].[DEX modifier]")
+	@init.command(help=init_add_help_text(), brief="Add to the initiative order", usage="[name] [initiative roll].[DEX modifier]")
 	async def add(ctx, name, init_roll):								#idk why tf this doesnt wanna take self anymore but it doesnt
 		global init_list
-		temp = rotom_mod.Creature(name, init_roll)
+		temp = Creature(name, init_roll)
 		init_list.append(temp)
 		init_list.sort(key=lambda varname:varname.initiative, reverse=True)
 		toPrint = name + " has been added to the initiative."
@@ -181,7 +202,7 @@ class dnd(commands.Cog, name="DND related"):
 				toPrint += "⬑ Taking their turn\n"
 		toPrint += "```"
 		await ctx.send(toPrint)
-	@init.command(help=rotom_mod.init_next_help_text(), brief="Continue the initiative order")
+	@init.command(help=init_next_help_text(), brief="Continue the initiative order")
 	async def next(self, ctx):
 		global init_list
 		global curr_player
@@ -195,11 +216,11 @@ class dnd(commands.Cog, name="DND related"):
 		toPrint +="```"
 		await ctx.send(toPrint)
 
-	@commands.group(help=rotom_mod.condition_help_text(), brief="Condition tracker (Must be used alongside the initiative tracker)", usage="[add, remove]")
+	@commands.group(help=condition_help_text(), brief="Condition tracker (Must be used alongside the initiative tracker)", usage="[add, remove]")
 	async def condition(self, ctx):
 		if ctx.invoked_subcommand is None:
 			await ctx.send("Need further instruction. Use `!help condition` for further help.")
-	@condition.command(help=rotom_mod.condition_add_help_text(), brief="Add a condition to a creature", usage="[name] [condition] [turns]")
+	@condition.command(help=condition_add_help_text(), brief="Add a condition to a creature", usage="[name] [condition] [turns]")
 	async def add(self, ctx, name, cond, turns=-1):
 		global init_list
 		checker = False
