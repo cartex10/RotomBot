@@ -21,7 +21,9 @@ COMMANDS:
 		Either shows requestable roles or adds/removes available roles
 	!roll
 		Rolls any specified die with any modifier
-		
+	!keepwatch
+		Helps keep track of who keeps which watch in a game of dnd
 EXTRA FEATURES:
 
 	Sends introductory message to new members
+	Sends update whenever a new One Piece chapter is released
