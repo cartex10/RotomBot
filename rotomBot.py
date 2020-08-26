@@ -9,9 +9,9 @@ import math
 
 load_dotenv()
 #TOKEN = os.getenv('DISCORD_TOKEN')		#Actual bot token
-#TOKEN = os.getenv('TEST_TOKEN')		#Test bot token
+TOKEN = os.getenv('TEST_TOKEN')		#Test bot token
 #guild_id = int(os.getenv('GUILD_ID')) #Actual server
-#guild_id = int(os.getenv('TEST_ID')) #Test server
+guild_id = int(os.getenv('TEST_ID')) #Test server
 
 #locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS"]
 locked_roles = ["CANNOT_ADD", "@everyone"]
@@ -28,7 +28,7 @@ global dm
 global on_check
 on_check = False
 global opchapter
-opchapter = 987
+opchapter = "987"
 
 @bot.event							
 async def on_ready():					#called at bot startup
@@ -51,14 +51,14 @@ async def on_ready():					#called at bot startup
  					if first:
  						first = False
  						opchapter = res[:-3]
- 					elif res[:-3] != str(opchapter):
+ 					elif res[:-3] != opchapter:
  						text = "A new chapter has been released!"
- 						embed = discord.Embed(title=text, color=3447003)
+ 						embed = discord.Embed(title=text, description="@Nakama", color=3447003)
  						embed.add_field(name="Link", value="https://www.reddit.com/r/OnePiece/")
  						guild = bot.get_guild(guild_id)
  						chan = discord.utils.get(guild.text_channels, name="one-piece")
  						await chan.send(embed=embed)
- 					await asyncio.sleep(10)
+ 					await asyncio.sleep(300)
 
 @bot.event
 async def on_member_join(mem):			#sends introductory dm to new members
@@ -254,6 +254,14 @@ class dnd(commands.Cog, name="DND related"):
 			init_list[index].condition = None
 			init_list[index].conditionDuration = 0
 			await ctx.send(name + "'s condition has been removed.")
+
+	@commands.command(help="Sends message to help keep track of who's keeping watch")
+	async def keepwatch(self, ctx):
+		text = "Night approaches...\nWho will take each watch?"
+		msg = await ctx.send(text)
+		nums = ["1⃣", "2⃣", "3⃣", "4⃣"]
+		for i in nums:
+			await msg.add_reaction(i)
 
 
 class server(commands.Cog, name="Server/Bot Related"):
