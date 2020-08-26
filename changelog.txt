@@ -37,7 +37,6 @@ v1.0 release - 5/18/20
 	-edit on_ready message now that RotomBot is no longer in testing/alpha
 	-edit on_ready status now that RotomBot is fully released
 
-***CURRENT VERSION***
 v2.0 release - 6/6/20 - THE DND UPDATE
 This was a MASSIVE update, over doubling the lines of code from an already big file of 160 lines to a whopping ~340 lines, and that doesn't even include the separate file that contains a bunch of lines of text for the help menu and other smaller stuff like that. Not only are there more commands that do more, but I've changed the way every command is coded, so less messageless errors will occur, and the help menu is a billion times more helpful. Also, this'll be the first version that I'm gonna be running indefinitely off my laptop. This'll probably cause issues, but I'm hoping everything runs smoothly. I hope you guys enjoy, and make sure to send me suggestions on what else the bot should be able to do! 
 
@@ -81,3 +80,10 @@ v2.2 release - 7/1/20:
 	-edit !roll to also receive "D" before die size
 	-edit !init view to show players' rolls
 	-fix !init add to save the correct initiative order
+
+***CURRENT VERSION***
+v2.3 release - 8/25/20
+	-OP new chapter updater
+		-whenever a new One Piece chapter is released, the bot will send a message
+	-!keepwatch
+		-sends a message to help keep track of who's keeping which watch
