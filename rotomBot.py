@@ -17,7 +17,7 @@ load_dotenv()
 #locked_roles = ["CANNOT_ADD", "@everyone"]
 base_activity = discord.Game(name="the !help waiting game")
 
-#on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.2.1 SUCCESSFULLY LOADED```"
+#on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.3.1 SUCCESSFULLY LOADED```"
 #on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
 bot = commands.Bot(command_prefix="!", status="online", activity=base_activity)
