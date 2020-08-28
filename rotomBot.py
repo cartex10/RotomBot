@@ -28,7 +28,7 @@ global dm
 global on_check
 on_check = False
 global opchapter
-opchapter = "987"
+opchapter = "One Piece: Chapter 987"
 
 @bot.event							
 async def on_ready():					#called at bot startup
@@ -46,12 +46,12 @@ async def on_ready():					#called at bot startup
 			async with aiohttp.ClientSession() as opsession:
  				async with opsession.get('https://www.reddit.com/r/OnePiece/') as opr:
  					res = await opr.text()
- 					yea = res.find('<h3 class="_eYtD2XCVieq6emjKBH3m">')
- 					res = res[yea+34:yea+56]
+ 					ind = res.find('<h3 class="_eYtD2XCVieq6emjKBH3m">')
+ 					res = res[ind+34:ind+56]
  					if first:
  						first = False
- 						opchapter = res[:-3]
- 					elif res[:-3] != opchapter:
+ 						opchapter = res
+ 					elif res != opchapter and res.startswith("One Piece: Chapter "):
  						text = "A new chapter has been released!"
  						embed = discord.Embed(title=text, description="@Nakama", color=3447003)
  						embed.add_field(name="Link", value="https://www.reddit.com/r/OnePiece/")
