@@ -87,3 +87,8 @@ v2.3 release - 8/25/20
 		-whenever a new One Piece chapter is released, the bot will send a message
 	-!keepwatch
 		-sends a message to help keep track of who's keeping which watch
+
+v2.3.1 release - 8/28/20
+	-fix OP chapter notifier (hopefully)
+	-OP chapter notifier now has the link directly to the reddit post
+	-OP chapter notifier now mentions Nakama
