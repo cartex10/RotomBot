@@ -17,7 +17,7 @@ load_dotenv()
 #locked_roles = ["CANNOT_ADD", "@everyone"]
 base_activity = discord.Game(name="the !help waiting game")
 
-#on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.2 SUCCESSFULLY LOADED```"
+#on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.2.1 SUCCESSFULLY LOADED```"
 #on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
 bot = commands.Bot(command_prefix="!", status="online", activity=base_activity)
@@ -47,17 +47,20 @@ async def on_ready():					#called at bot startup
  				async with opsession.get('https://www.reddit.com/r/OnePiece/') as opr:
  					res = await opr.text()
  					ind = res.find('<h3 class="_eYtD2XCVieq6emjKBH3m">')
- 					res = res[ind+34:ind+56]
+ 					newpull = res[ind+34:ind+56]
  					if first:
  						first = False
- 						opchapter = res
- 					elif res != opchapter and res.startswith("One Piece: Chapter "):
+ 						opchapter = newpull
+ 					elif newpull != opchapter and newpull.startswith("One Piece: Chapter "):
  						text = "A new chapter has been released!"
- 						embed = discord.Embed(title=text, description="@Nakama", color=3447003)
- 						embed.add_field(name="Link", value="https://www.reddit.com/r/OnePiece/")
+ 						linkind = res.find('class="SQnoC3ObvgnGjWt90zD9Z _2INHSNB8V5eaWp4P0rY_mE"')
+ 						link = "https://www.reddit.com" + res[linkind+60:linkind+138]
+ 						embed = discord.Embed(title=text, description=opchapter+" has been released", color=3447003)
+ 						embed.add_field(name="Link", value=link)
  						guild = bot.get_guild(guild_id)
  						chan = discord.utils.get(guild.text_channels, name="one-piece")
- 						await chan.send(embed=embed)
+ 						crewmates = discord.utils.get(guild.roles, name="Nakama")
+ 						await chan.send(crewmates.mention, embed=embed)
  					await asyncio.sleep(300)
 
 @bot.event
