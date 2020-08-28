@@ -271,7 +271,7 @@ class server(commands.Cog, name="Server/Bot Related"):
 	def _init_(self, bot):
 		self.bot = bot
 
-	@commands.group(help="Role commands", usage="[view, request]")
+	@commands.group(help="Role commands", usage="[view, request, remove]")
 	async def role(self, ctx):
 		if ctx.invoked_subcommand is None:
 			await ctx.send("Need further instruction. Use `!help role` for further help.")
