@@ -42,6 +42,8 @@ async def on_ready():					#called at bot startup
 		await chan.send(on_text)
 		#OP Chapter notifier
 		first = True
+		chan = discord.utils.get(guild.text_channels, name="one-piece")
+ 		crewmates = discord.utils.get(guild.roles, name="Nakamas")
 		while True:
 			async with aiohttp.ClientSession() as opsession:
  				async with opsession.get('https://www.reddit.com/r/OnePiece/') as opr:
@@ -57,9 +59,6 @@ async def on_ready():					#called at bot startup
  						link = "https://www.reddit.com" + res[linkind+60:linkind+138]
  						embed = discord.Embed(title=text, description=opchapter+" has been released", color=3447003)
  						embed.add_field(name="Link", value=link)
- 						guild = bot.get_guild(guild_id)
- 						chan = discord.utils.get(guild.text_channels, name="one-piece")
- 						crewmates = discord.utils.get(guild.roles, name="Nakama")
  						await chan.send(crewmates.mention, embed=embed)
  					await asyncio.sleep(300)
 
