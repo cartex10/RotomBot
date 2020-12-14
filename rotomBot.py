@@ -13,7 +13,7 @@ load_dotenv()
 #guild_id = int(os.getenv('GUILD_ID')) #Actual server
 #guild_id = int(os.getenv('TEST_ID')) #Test server
 
-#locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS"]
+#locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS", "ARCHIVED"]
 #locked_roles = ["CANNOT_ADD", "@everyone"]
 base_activity = discord.Game(name="the !help waiting game")
 
@@ -43,7 +43,7 @@ async def on_ready():					#called at bot startup
 		#OP Chapter notifier
 		first = True
 		chan = discord.utils.get(guild.text_channels, name="one-piece")
- 		crewmates = discord.utils.get(guild.roles, name="Nakamas")
+		crewmates = discord.utils.get(guild.roles, name="Nakamas")
 		while True:
 			async with aiohttp.ClientSession() as opsession:
  				async with opsession.get('https://www.reddit.com/r/OnePiece/') as opr:
@@ -60,6 +60,7 @@ async def on_ready():					#called at bot startup
  						embed = discord.Embed(title=text, description=opchapter+" has been released", color=3447003)
  						embed.add_field(name="Link", value=link)
  						await chan.send(crewmates.mention, embed=embed)
+ 						opchapter = newpull
  					await asyncio.sleep(300)
 
 @bot.event
@@ -135,7 +136,7 @@ class dnd(commands.Cog, name="DND related"):
 		else:
 			await ctx.send("Sorry, only a fellowship member can use this function")
 	@ddc.command(help="Subtract from the destroyed dimension counter")
-	async def sub(ctx):
+	async def sub(self, ctx):
 		intcount = int(open("ddc.txt").read())
 		memRoleList = ctx.message.author.roles
 		hasRole = 0
@@ -293,21 +294,21 @@ class server(commands.Cog, name="Server/Bot Related"):
 		guild = bot.get_guild(guild_id)
 		rolelist = guild.roles
 		memRoleList = ctx.message.author.roles
-		isActualRole = 0
-		isLockedRole = 0
-		hasRole = 0
+		isActualRole = False
+		isLockedRole = False
+		hasRole = False
 		reqRole = discord.Role
 		for i in locked_roles:
 			if i == inp:
-				isLockedRole = 1
+				isLockedRole = True
 		for i in memRoleList:
 			if i.name == inp:
-				hasRole = 1
+				hasRole = True
 		for i in rolelist:
 			if i.name == inp:
-				isActualRole = 1
+				isActualRole = True
 				reqRole = i
-		if isActualRole != 1:
+		if not isActualRole:
 			await ctx.send("Role not recognized")
 		elif hasRole:
 			await ctx.send("You already have this role")
@@ -361,7 +362,8 @@ class misc(commands.Cog, name="Miscellanious"):
 
 	@commands.command(help="repeat any phrase")
 	async def repeat(self, ctx, *, inp):
-		await ctx.message.delete()
+		if type(ctx.channel) != discord.DMChannel:
+			await ctx.message.delete()
 		await ctx.send(inp)
 
 
