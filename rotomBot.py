@@ -147,12 +147,17 @@ class dnd(commands.Cog, name="DND related"):
 		curr_player = 0
 		dm = ctx.message.author
 		await ctx.send("New initiative has been started.\nUse `!init add` to add players or other creatures into it")
-	@init.command(help=init_add_help_text(), brief="Add to the initiative order", usage="[name] [initiative roll].[DEX modifier] [secrecy]")
-	async def add(ctx, name, init_roll, secrecy=0):	#idk why tf this doesnt wanna take self anymore but it doesnt
+	@init.command(help=init_add_help_text(), brief="Add to the initiative order", usage="[name] [initiative roll].[DEX modifier] [visible/hidden]")
+	async def add(ctx, name, init_roll, secrecy="visible"):	#idk why tf this doesnt wanna take self anymore but it doesnt
 		global init_list
 		global dm
 		if dm.name != ctx.message.author.name:
-			secrecy = False
+			secrecy = 0
+		if type(secrecy) is str:
+			if secrecy.startswith("h"):
+				secrecy = 1
+			elif secrecy.startswith("v"):
+				secrecy = 0
 		temp = Creature(name, init_roll, secrecy)
 		init_list.append(temp)
 		init_list.sort(key=lambda varname:varname.initiative, reverse=True)

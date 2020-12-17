@@ -1,4 +1,5 @@
 import aiohttp, asyncio, discord
+from enum import Enum
 
 class Creature:
 	name = "None"
@@ -6,9 +7,11 @@ class Creature:
 	hasCond = False
 	condition = None
 	conditionDuration = 0
-	def __init__(self, arg0, arg1):
+	isSecret = False
+	def __init__(self, arg0, arg1, arg2):
 		self.name = arg0
 		self.initiative = float(arg1)
+		self.isSecret = bool(arg2)
 	def update(self):
 		if self.conditionDuration != 0:
 			self.conditionDuration -= 1
@@ -50,6 +53,7 @@ def init_add_help_text():
 	text = "This command adds a creature to the currently tracked initiative.\n"
 	text = "In order to use this command, type the name of the creature then their initiative roll.\n"
 	text = "It's recommended to add the creature's DEX modifier as a decimal to the roll in case there is a tie."
+	text = "If you want for this roll to stay hidden to the players, add another argument, 'hidden'"
 	return text
 
 def init_next_help_text():
