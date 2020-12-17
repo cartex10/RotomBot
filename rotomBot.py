@@ -147,10 +147,13 @@ class dnd(commands.Cog, name="DND related"):
 		curr_player = 0
 		dm = ctx.message.author
 		await ctx.send("New initiative has been started.\nUse `!init add` to add players or other creatures into it")
-	@init.command(help=init_add_help_text(), brief="Add to the initiative order", usage="[name] [initiative roll].[DEX modifier]")
-	async def add(ctx, name, init_roll):								#idk why tf this doesnt wanna take self anymore but it doesnt
+	@init.command(help=init_add_help_text(), brief="Add to the initiative order", usage="[name] [initiative roll].[DEX modifier] [secrecy]")
+	async def add(ctx, name, init_roll, secrecy=0):	#idk why tf this doesnt wanna take self anymore but it doesnt
 		global init_list
-		temp = Creature(name, init_roll)
+		global dm
+		if dm.name != ctx.message.author.name:
+			secrecy = False
+		temp = Creature(name, init_roll, secrecy)
 		init_list.append(temp)
 		init_list.sort(key=lambda varname:varname.initiative, reverse=True)
 		toPrint = name + " has been added to the initiative."
@@ -180,14 +183,15 @@ class dnd(commands.Cog, name="DND related"):
 			toPrint += " (" + dm.name + ")"
 		toPrint += "\n\n***Initiative order***\n"
 		for i in init_list:
-			if curr_player == init_list.index(i):
-				toPrint += "⬐ Taking their turn\n"
-			toPrint += i.name + " - " + str(i.initiative)[:-2]
-			if i.hasCond:
-				toPrint += " - " + i.condition.upper()
-			toPrint += "\n"
-			if curr_player == init_list.index(i):
-				toPrint += "⬑ Taking their turn\n"
+			if not i.isSecret or dm.name == ctx.message.author.name:
+				if curr_player == init_list.index(i):
+					toPrint += "⬐ Taking their turn\n"
+				toPrint += i.name + " - " + str(i.initiative)[:-2]
+				if i.hasCond:
+					toPrint += " - " + i.condition.upper()
+				toPrint += "\n"
+				if curr_player == init_list.index(i):
+					toPrint += "⬑ Taking their turn\n"
 
 		toPrint += "```"
 		await ctx.send(toPrint)
