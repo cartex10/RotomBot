@@ -26,4 +26,3 @@ COMMANDS:
 EXTRA FEATURES:
 
 	Sends introductory message to new members
-	Sends update whenever a new One Piece chapter is released
