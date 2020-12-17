@@ -92,3 +92,10 @@ v2.3.1 release - 8/28/20
 	-fix OP chapter notifier (hopefully)
 	-OP chapter notifier now has the link directly to the reddit post
 	-OP chapter notifier now mentions Nakama
+
+v 2.3.2 release - 12/16/20
+	-add !role remove to !help role printout
+	-!repeat now works in DMs
+	-fixed !ddc sub
+	-!init view now prints DM info
+	-DM can now add secret creatures using !init add
