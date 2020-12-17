@@ -6,19 +6,20 @@ from rotom_mod import *
 
 import random
 import math
+import time
 
 load_dotenv()
 #TOKEN = os.getenv('DISCORD_TOKEN')		#Actual bot token
-#TOKEN = os.getenv('TEST_TOKEN')		#Test bot token
+TOKEN = os.getenv('TEST_TOKEN')		#Test bot token
 #guild_id = int(os.getenv('GUILD_ID')) #Actual server
-#guild_id = int(os.getenv('TEST_ID')) #Test server
+guild_id = int(os.getenv('TEST_ID')) #Test server
 
 #locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS", "ARCHIVED"]
-#locked_roles = ["CANNOT_ADD", "@everyone"]
+locked_roles = ["CANNOT_ADD", "@everyone"]
 base_activity = discord.Game(name="the !help waiting game")
 
 #on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.3.1 SUCCESSFULLY LOADED```"
-#on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
+on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
 bot = commands.Bot(command_prefix="!", status="online", activity=base_activity)
 
@@ -42,26 +43,6 @@ async def on_ready():					#called at bot startup
 		await chan.send(on_text)
 		#OP Chapter notifier
 		first = True
-		chan = discord.utils.get(guild.text_channels, name="one-piece")
-		crewmates = discord.utils.get(guild.roles, name="Nakamas")
-		while True:
-			async with aiohttp.ClientSession() as opsession:
- 				async with opsession.get('https://www.reddit.com/r/OnePiece/') as opr:
- 					res = await opr.text()
- 					ind = res.find('<h3 class="_eYtD2XCVieq6emjKBH3m">')
- 					newpull = res[ind+34:ind+56]
- 					if first:
- 						first = False
- 						opchapter = newpull
- 					elif newpull != opchapter and newpull.startswith("One Piece: Chapter "):
- 						text = "A new chapter has been released!"
- 						linkind = res.find('class="SQnoC3ObvgnGjWt90zD9Z _2INHSNB8V5eaWp4P0rY_mE"')
- 						link = "https://www.reddit.com" + res[linkind+60:linkind+138]
- 						embed = discord.Embed(title=text, description=opchapter+" has been released", color=3447003)
- 						embed.add_field(name="Link", value=link)
- 						await chan.send(crewmates.mention, embed=embed)
- 						opchapter = newpull
- 					await asyncio.sleep(300)
 
 @bot.event
 async def on_member_join(mem):			#sends introductory dm to new members
@@ -193,7 +174,11 @@ class dnd(commands.Cog, name="DND related"):
 	async def view(self, ctx):
 		global init_list
 		global curr_player
-		toPrint = "```***Initiative order***\n"
+		global dm
+		toPrint = "```DM: " + dm.display_name
+		if dm.display_name != dm.name:
+			toPrint += " (" + dm.name + ")"
+		toPrint += "\n\n***Initiative order***\n"
 		for i in init_list:
 			if curr_player == init_list.index(i):
 				toPrint += "⬐ Taking their turn\n"
@@ -203,6 +188,7 @@ class dnd(commands.Cog, name="DND related"):
 			toPrint += "\n"
 			if curr_player == init_list.index(i):
 				toPrint += "⬑ Taking their turn\n"
+
 		toPrint += "```"
 		await ctx.send(toPrint)
 	@init.command(help=init_next_help_text(), brief="Continue the initiative order")
