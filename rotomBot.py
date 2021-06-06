@@ -10,29 +10,32 @@ import time
 
 load_dotenv()
 #TOKEN = os.getenv('DISCORD_TOKEN')		#Actual bot token
-#TOKEN = os.getenv('TEST_TOKEN')		#Test bot token
+TOKEN = os.getenv('TEST_TOKEN')		#Test bot token
 #guild_id = int(os.getenv('GUILD_ID')) #Actual server
-#guild_id = int(os.getenv('TEST_ID')) #Test server
+guild_id = int(os.getenv('TEST_ID')) #Test server
 
 #locked_roles = ["Admin", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS", "ARCHIVED", "SICK"]
-#locked_roles = ["CANNOT_ADD", "@everyone"]
+locked_roles = ["CANNOT_ADD", "@everyone"]
 base_activity = discord.Game(name="the !help waiting game")
 
 #on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.3.2 SUCCESSFULLY LOADED```"
-#on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
+on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
-bot = commands.Bot(command_prefix="!", status="online", activity=base_activity)
+intents = discord.Intents.default()
+intents.members = True
+bot = commands.Bot(command_prefix="!", status="online", activity=base_activity, intents=intents)
 
 global init_list
 global curr_player
 global dm
 global on_check
+global guild
 on_check = False
 
 @bot.event							
-async def on_ready():					#called at bot startup
+async def on_ready():						#called at bot startup
 	global on_check
-	global opchapter
+	global guild
 	guild = bot.get_guild(guild_id)
 	chan = discord.utils.get(guild.text_channels, name="general")
 	await bot.change_presence(activity=base_activity, status="online")
@@ -41,9 +44,31 @@ async def on_ready():					#called at bot startup
 		await chan.send(on_text)
 
 @bot.event
-async def on_member_join(mem):			#sends introductory dm to new members
+async def on_member_join(mem):				#sends introductory dm to new members
 	await mem.send(mem_join_text())
 
+@bot.listen('on_message')					#checks for new messages in #pick-roles
+async def register_reaction(message):
+	global guild
+	chan = discord.utils.get(guild.text_channels, name="pick-roles")
+	if message.channel == chan and not message.author.bot:
+		await chan.send("read!")
+
+@bot.listen('on_raw_reaction_add')			#checks for new reactions in #pick-roles
+async def reaction_listener(payload):
+	global guild
+	chan = discord.utils.get(guild.text_channels, name="pick-roles")
+	sender = discord.utils.get(guild.members, id=payload.user_id)
+	if payload.channel_id == chan.id and not sender.bot:
+		await chan.send("reacted!")
+
+@bot.listen('on_raw_reaction_remove')			#checks for removal of reactions in #pick-roles
+async def reaction_unlistener(payload):
+	global guild
+	chan = discord.utils.get(guild.text_channels, name="pick-roles")
+	sender = discord.utils.get(guild.members, id=payload.user_id)
+	if payload.channel_id == chan.id and not sender.bot:
+		await chan.send("unreacted!")
 
 class dnd(commands.Cog, name="DND related"):
 	def _init_(self, bot):
