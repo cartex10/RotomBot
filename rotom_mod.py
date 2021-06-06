@@ -1,4 +1,4 @@
-import aiohttp, asyncio, discord
+import aiohttp, asyncio, discord, sqlite3
 from enum import Enum
 
 class Creature:
@@ -22,7 +22,12 @@ class Creature:
 			self.hasCond = True
 		else:
 			self.hasCond = False
+##### DATA BASE FUNCTIONS #####
+def create_connection(path):				#connect to database
+	connection = sqlite3.connect(path)
+	return connection
 
+##### HELP TEXT #####
 def mem_join_text():
 	msg = "Hello! Welcome to our lovely server! We hope you enjoy your time here. :smile: \n"
 	msg += "Before you do anything, I recommend you mute `#music-control` so you're not bombarded by music notifications."

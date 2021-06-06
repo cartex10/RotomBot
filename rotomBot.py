@@ -30,6 +30,7 @@ global curr_player
 global dm
 global on_check
 global guild
+global con
 on_check = False
 
 @bot.event							
@@ -41,6 +42,7 @@ async def on_ready():						#called at bot startup
 	await bot.change_presence(activity=base_activity, status="online")
 	if on_check == False:
 		on_check = True
+		con = create_connection("rotom_database.db")
 		await chan.send(on_text)
 
 @bot.event
@@ -367,6 +369,7 @@ class server(commands.Cog, name="Server/Bot Related"):
 	@commands.command(hidden=True)
 	async def shutdown(self, ctx):
 		if await bot.is_owner(ctx.message.author):
+			con.close()
 			await ctx.message.delete()
 			await ctx.send("```ROTOM BOT SHUTTING DOWN```")
 			await bot.close()
