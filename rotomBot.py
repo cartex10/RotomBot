@@ -14,7 +14,7 @@ load_dotenv()
 #guild_id = int(os.getenv('GUILD_ID')) #Actual server
 #guild_id = int(os.getenv('TEST_ID')) #Test server
 
-#locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS", "ARCHIVED", "SICK"]
+#locked_roles = ["Admin", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS", "ARCHIVED", "SICK"]
 #locked_roles = ["CANNOT_ADD", "@everyone"]
 base_activity = discord.Game(name="the !help waiting game")
 
