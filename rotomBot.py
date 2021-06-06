@@ -9,16 +9,16 @@ import math
 import time
 
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')		#Actual bot token
+#TOKEN = os.getenv('DISCORD_TOKEN')		#Actual bot token
 #TOKEN = os.getenv('TEST_TOKEN')		#Test bot token
-guild_id = int(os.getenv('GUILD_ID')) #Actual server
+#guild_id = int(os.getenv('GUILD_ID')) #Actual server
 #guild_id = int(os.getenv('TEST_ID')) #Test server
 
-locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS", "ARCHIVED"]
+#locked_roles = ["Admin", "fellowship", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS", "ARCHIVED", "SICK"]
 #locked_roles = ["CANNOT_ADD", "@everyone"]
 base_activity = discord.Game(name="the !help waiting game")
 
-on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.3.2 SUCCESSFULLY LOADED```"
+#on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.3.2 SUCCESSFULLY LOADED```"
 #on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
 bot = commands.Bot(command_prefix="!", status="online", activity=base_activity)
@@ -28,8 +28,6 @@ global curr_player
 global dm
 global on_check
 on_check = False
-global opchapter
-opchapter = "One Piece: Chapter 987"
 
 @bot.event							
 async def on_ready():					#called at bot startup
@@ -41,8 +39,6 @@ async def on_ready():					#called at bot startup
 	if on_check == False:
 		on_check = True
 		await chan.send(on_text)
-		#OP Chapter notifier
-		first = True
 
 @bot.event
 async def on_member_join(mem):			#sends introductory dm to new members
