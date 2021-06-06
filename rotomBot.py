@@ -369,7 +369,7 @@ class server(commands.Cog, name="Server/Bot Related"):
 		if await bot.is_owner(ctx.message.author):
 			await ctx.message.delete()
 			await ctx.send("```ROTOM BOT SHUTTING DOWN```")
-			await bot.logout()
+			await bot.close()
 
 
 class misc(commands.Cog, name="Miscellanious"):
