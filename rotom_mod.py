@@ -33,6 +33,15 @@ def ddc_return(connection):				#search the database
 	for row in cursor.execute("SELECT counter FROM ddc WHERE campaign='fotgl'"):
 		return row[0]
 
+def ddc_increment(connection):
+	cursor = connection.cursor()
+	counter = ddc_return(connection)
+	cursor.execute("DELETE FROM ddc WHERE campaign='fotgl'")
+	counter += 1
+	cursor.execute("INSERT INTO ddc VALUES (?, ?)", ('fotgl', counter))
+	connection.commit()
+	return counter
+
 ##### HELP TEXT #####
 def mem_join_text():
 	msg = "Hello! Welcome to our lovely server! We hope you enjoy your time here. :smile: \n"

@@ -126,19 +126,16 @@ class dnd(commands.Cog, name="DND related"):
 			await ctx.send("Sorry, only a fellowship member can use this function")
 	@ddc.command(help="Add to the destroyed dimension counter")
 	async def add(ctx):
-		intcount = int(open("ddc.txt").read())
+		global con
 		memRoleList = ctx.message.author.roles
 		hasRole = 0
 		for i in memRoleList:
 			if i.name == "fellowship":
 				hasRole = 1	
 		if hasRole == 1:
-			intcount += 1
-			file = open("ddc.txt", "w")
-			file.write(str(intcount))
+			intcount = ddc_increment(con)
 			text = "Another dimension lost...\nThat makes " + str(intcount) + " dimensions lost to darkness."
 			await ctx.send(text)
-			file.close()
 		else:
 			await ctx.send("Sorry, only a fellowship member can use this function")
 	@ddc.command(help="Subtract from the destroyed dimension counter")
