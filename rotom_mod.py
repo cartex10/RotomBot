@@ -28,16 +28,25 @@ def create_connection(path):				#connect to database
 	connection = sqlite3.connect(path)
 	return connection
 
-def ddc_return(connection):				#search the database
+def ddc_return(connection):					#get ddc from database
 	cursor = connection.cursor()
 	for row in cursor.execute("SELECT counter FROM ddc WHERE campaign='fotgl'"):
 		return row[0]
 
-def ddc_increment(connection):
+def ddc_increment(connection):				#increment ddc
 	cursor = connection.cursor()
 	counter = ddc_return(connection)
 	cursor.execute("DELETE FROM ddc WHERE campaign='fotgl'")
 	counter += 1
+	cursor.execute("INSERT INTO ddc VALUES (?, ?)", ('fotgl', counter))
+	connection.commit()
+	return counter
+
+def ddc_decrement(connection):				#decrement ddc
+	cursor = connection.cursor()
+	counter = ddc_return(connection)
+	cursor.execute("DELETE FROM ddc WHERE campaign='fotgl'")
+	counter -= 1
 	cursor.execute("INSERT INTO ddc VALUES (?, ?)", ('fotgl', counter))
 	connection.commit()
 	return counter
