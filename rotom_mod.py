@@ -22,10 +22,16 @@ class Creature:
 			self.hasCond = True
 		else:
 			self.hasCond = False
+
 ##### DATA BASE FUNCTIONS #####
 def create_connection(path):				#connect to database
 	connection = sqlite3.connect(path)
 	return connection
+
+def ddc_return(connection):				#search the database
+	cursor = connection.cursor()
+	for row in cursor.execute("SELECT counter FROM ddc WHERE campaign='fotgl'"):
+		return row[0]
 
 ##### HELP TEXT #####
 def mem_join_text():

@@ -37,6 +37,7 @@ on_check = False
 async def on_ready():						#called at bot startup
 	global on_check
 	global guild
+	global con
 	guild = bot.get_guild(guild_id)
 	chan = discord.utils.get(guild.text_channels, name="general")
 	await bot.change_presence(activity=base_activity, status="online")
@@ -110,7 +111,8 @@ class dnd(commands.Cog, name="DND related"):
 			await ctx.send("Need further instruction. Use `!help ddc` for further help.")			
 	@ddc.command(help="View the current destroyed dimension counter")
 	async def view(ctx):
-		intcount = int(open("ddc.txt").read())
+		global con
+		intcount = ddc_return(con)
 		memRoleList = ctx.message.author.roles
 		hasRole = 0
 		for i in memRoleList:
@@ -368,6 +370,7 @@ class server(commands.Cog, name="Server/Bot Related"):
 
 	@commands.command(hidden=True)
 	async def shutdown(self, ctx):
+		global con
 		if await bot.is_owner(ctx.message.author):
 			con.close()
 			await ctx.message.delete()
