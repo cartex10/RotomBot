@@ -1,8 +1,10 @@
 # RotomBot
 Custom discord bot made for a small server of close friends, has a few Dungeons and Dragons related functions and general server management commands
 
-NOTES: 	requires a personal file, a .env that is excluded from the repo for privacy reasons
-		the database included is mostly empty, with two tables ready for use
+NOTES: 	
+	requires a personal file, a .env that is excluded from the repo for privacy reasons
+
+	the database included is mostly empty, with two tables ready for use
 
 COMMANDS:
 
