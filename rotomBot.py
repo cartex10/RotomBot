@@ -10,17 +10,14 @@ import time
 
 load_dotenv()
 #TOKEN = os.getenv('DISCORD_TOKEN')		#Actual bot token
-TOKEN = os.getenv('TEST_TOKEN')		#Test bot token
+#TOKEN = os.getenv('TEST_TOKEN')		#Test bot token
 #guild_id = int(os.getenv('GUILD_ID')) #Actual server
-guild_id = int(os.getenv('TEST_ID')) #Test server
+#guild_id = int(os.getenv('TEST_ID')) #Test server
 
-#locked_roles = ["Admin", "dragonforce", "Groovy", "RotomBot", "@everyone", "BOTS", "ARCHIVED", "SICK"]
-locked_roles = ["CANNOT_ADD", "@everyone"]
+#on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.4 SUCCESSFULLY LOADED```"
+#on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
+
 base_activity = discord.Game(name="the !help waiting game")
-
-#on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.3.2 SUCCESSFULLY LOADED```"
-on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
-
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix="!", status="online", activity=base_activity, intents=intents)
@@ -72,6 +69,22 @@ async def register_reaction(message):
 				add_role_to_db(con, message.id, role, int(tempsplit[2][:-1]))
 				count += 1
 			await chan.send(str(count) + " new roles registered!")
+	# #server-suggestions channel functionality
+	chan = discord.utils.get(guild.text_channels, name="server-suggestions")
+	if message.channel == chan and not message.author.bot:
+		admin_mention = False
+		admin_role = discord.utils.get(guild.roles, name="Admin")
+		for i in message.role_mentions:
+			if i == admin_role:
+				admin_mention = True
+				break
+		if admin_mention:
+			chan = discord.utils.get(guild.text_channels, name="admin-chat")
+			toPrint = message.author.display_name
+			if message.author.display_name != message.author.name:
+				toPrint += " (" + message.author.name + ")"
+			toPrint += ": " + message.content + "\n " + message.jump_url
+			await chan.send(toPrint)
 
 @bot.listen('on_raw_message_delete')			#checks for deleted messages
 async def remove_reactions(payload):
@@ -94,6 +107,7 @@ async def reaction_listener(payload):
 		for i in memRoleList:
 			if i.id == reqRole.id:
 				hasRole = True
+				break
 		if not hasRole:
 			await sender.add_roles(reqRole)
 			await sender.send("You now have the '" + reqRole.name + "' role! :smile:")
@@ -111,6 +125,7 @@ async def reaction_unlistener(payload):
 		for i in memRoleList:
 			if i.id == remRole.id:
 				hasRole = True
+				break
 		if hasRole:
 			await sender.remove_roles(remRole)
 			await sender.send("You no longer have the '" + remRole.name + "' role! :frowning:")
@@ -327,67 +342,6 @@ class dnd(commands.Cog, name="DND related"):
 class server(commands.Cog, name="Server/Bot Related"):
 	def _init_(self, bot):
 		self.bot = bot
-
-	@commands.group(help="Role commands", usage="[view, request, remove]")
-	async def role(self, ctx):
-		if ctx.invoked_subcommand is None:
-			await ctx.send("Need further instruction. Use `!help role` for further help.")
-	@role.command(help="View unlocked roles")
-	async def view(self, ctx):
-		guild = bot.get_guild(guild_id)
-		rolelist = guild.roles
-		toPrint = "```***Requestable roles***\n\n"		
-		for i in locked_roles:
-			for j in rolelist:
-				if i == j.name:
-					rolelist.remove(j)
-		for i in rolelist:
-			toPrint += i.name
-			toPrint += "\n"
-		toPrint += "```"
-		await ctx.send(toPrint)
-	@role.command(help="Request a role")
-	async def request(self, ctx, inp):
-		guild = bot.get_guild(guild_id)
-		rolelist = guild.roles
-		memRoleList = ctx.message.author.roles
-		isActualRole = False
-		isLockedRole = False
-		hasRole = False
-		reqRole = discord.Role
-		for i in locked_roles:
-			if i == inp:
-				isLockedRole = True
-		for i in memRoleList:
-			if i.name == inp:
-				hasRole = True
-		for i in rolelist:
-			if i.name == inp:
-				isActualRole = True
-				reqRole = i
-		if not isActualRole:
-			await ctx.send("Role not recognized")
-		elif hasRole:
-			await ctx.send("You already have this role")
-		elif isLockedRole:
-			await ctx.send("You must ask an admin if you want this role")
-		else:
-			await ctx.message.author.add_roles(reqRole)
-			await ctx.send("One role coming right up!")
-	@role.command(help="Remove a role from yourself")
-	async def remove(self, ctx, inp):
-		hasRole = False
-		memRoleList = ctx.message.author.roles
-		remRole = discord.Role
-		for i in memRoleList:
-			if i.name == inp:
-				hasRole = True
-				remRole = i
-		if not hasRole:
-			await ctx.send("You do not have the requested role.")
-		else:
-			await ctx.message.author.remove_roles(remRole)
-			await ctx.send("Role removed. Sorry to see you go :pensive:")
 
 	@commands.command(help="Prints the current version's changelog")
 	async def changelog(self, ctx):
