@@ -76,13 +76,13 @@ def mem_join_text():
 	msg += "Before you do anything, I recommend you mute `#music-control` so you're not bombarded by music notifications."
 	msg += "To do this, just click the bell at the top of the window while looking at `#music-control`.\n\n"
 	msg += "Also, a bunch of channels are currently hidden behind some roles."
-	msg += "This is so that your not bombarded by notifications for games you don't care about."
-	msg += "If there are games/hidden channels you want to be a part of, type `!role view` to view all of the roles you can request, "
-	msg += "then type `!role request [role]` to recieve that role.\n"
+	msg += "This is so that your not bombarded by notifications for games or other stuff you don't care about."
+	msg += "If there are hidden channels you want to be a part of, head on over to the `#pick-roles` channel,"
+	msg += "where using the reactions, you can assign yourself whichever role you want.\n"
 	msg += "One role you should grab is `InWoburn`, which we use to ping people to hang out if they're in town\n\n"
 	msg += "I know that's a lot of information, but you only have to worry about this once.\n"
 	msg += "Anyhow, that's all I have to say, so I'll leave you off here!\n"
-	msg += "Remember to type `!help` in any channel in the server if you want to know what I can do!"
+	msg += "Remember to dm me `!help` if you want to know what I can do!"
 	return msg
 
 def init_help_text():
