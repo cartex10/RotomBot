@@ -81,7 +81,6 @@ v2.2 release - 7/1/20:
 	-edit !init view to show players' rolls
 	-fix !init add to save the correct initiative order
 
-***CURRENT VERSION***
 v2.3 release - 8/25/20
 	-OP new chapter updater
 		-whenever a new One Piece chapter is released, the bot will send a message
@@ -93,9 +92,21 @@ v2.3.1 release - 8/28/20
 	-OP chapter notifier now has the link directly to the reddit post
 	-OP chapter notifier now mentions Nakama
 
-v 2.3.2 release - 12/16/20
+v2.3.2 release - 12/16/20
 	-add !role remove to !help role printout
 	-!repeat now works in DMs
 	-fixed !ddc sub
 	-!init view now prints DM info
 	-DM can now add secret creatures using !init add
+
+***CURRENT VERSION***
+v2.4 release - 6/11/21
+	-remove all !role commands in favor of...
+	-new functionality for #pick-roles channel, which replaces the !role commands
+		*Instead of using the annoying text commands, you can now use reactions to add and remove roles
+	-add database functionality
+		-this database will be used for both the ddc and the #pick-roles channel
+	-remove need for ddc.txt and update respective commands
+	-new functionality for #server-suggestions channel
+		*With this functionality, any message in this channel with an Admin mention will be sent to the #admin-chat channel
+		*This is going to be used to help improve the server using member suggestions
