@@ -51,6 +51,17 @@ def ddc_decrement(connection):				#decrement ddc
 	connection.commit()
 	return counter
 
+def add_role_to_db(connection, message_id, role, emoji):		#add to database
+	cursor = connection.cursor()
+	cursor.execute("INSERT INTO rolereactions VALUES (?, ?, ?)", (message_id, role, emoji))
+	connection.commit()
+	return
+
+def get_role_from_db(connection, message_id, emoji):
+	cursor = connection.cursor()
+	cursor.execute("SELECT role FROM rolereactions WHERE message_id=? AND emoji=?", (message_id, emoji))
+	return cursor.fetchall()[0][0]
+
 ##### HELP TEXT #####
 def mem_join_text():
 	msg = "Hello! Welcome to our lovely server! We hope you enjoy your time here. :smile: \n"

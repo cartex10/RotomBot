@@ -33,8 +33,8 @@ global guild
 global con
 on_check = False
 
-@bot.event							
-async def on_ready():						#called at bot startup
+@bot.event									#called at bot startup
+async def on_ready():						
 	global on_check
 	global guild
 	global con
@@ -46,32 +46,67 @@ async def on_ready():						#called at bot startup
 		con = create_connection("rotom_database.db")
 		await chan.send(on_text)
 
-@bot.event
-async def on_member_join(mem):				#sends introductory dm to new members
+@bot.event									#sends introductory dm to new members
+async def on_member_join(mem):				
 	await mem.send(mem_join_text())
 
 @bot.listen('on_message')					#checks for new messages in #pick-roles
 async def register_reaction(message):
-	global guild
+	# #pick-roles channel functionality
 	chan = discord.utils.get(guild.text_channels, name="pick-roles")
 	if message.channel == chan and not message.author.bot:
-		await chan.send("read!")
+		count = 0
+		content = message.content
+		if not content.endswith(":"):
+			thesplit = content.split(", ")
+			for i in thesplit:
+				tempsplit = i.split(": ")
+				role = discord.utils.get(guild.roles, name=tempsplit[0])
+				if type(role).__name__ == "NoneType":
+					await chan.send("ERROR: Role #" + str(count+1) + " not found")
+					return
+				role = role.id
+				tempsplit = tempsplit[1].split(":")
+				reaction = discord.utils.get(guild.emojis, id=int(tempsplit[2][:-1]))
+				await message.add_reaction(reaction)
+				add_role_to_db(con, message.id, role, int(tempsplit[2][:-1]))
+				count += 1
+			await chan.send(str(count) + " new roles registered!")
 
 @bot.listen('on_raw_reaction_add')			#checks for new reactions in #pick-roles
 async def reaction_listener(payload):
-	global guild
-	chan = discord.utils.get(guild.text_channels, name="pick-roles")
 	sender = discord.utils.get(guild.members, id=payload.user_id)
+	# #pick-roles channel functionality
+	chan = discord.utils.get(guild.text_channels, name="pick-roles")
 	if payload.channel_id == chan.id and not sender.bot:
-		await chan.send("reacted!")
+		hasRole = False
+		reqRole = get_role_from_db(con, payload.message_id, payload.emoji.id)
+		reqRole = discord.utils.get(guild.roles, id=reqRole)
+		memRoleList = sender.roles
+		for i in memRoleList:
+			if i.id == reqRole.id:
+				hasRole = True
+		if not hasRole:
+			await sender.add_roles(reqRole)
+			await sender.send("You now have the '" + reqRole.name + "' role!")
 
-@bot.listen('on_raw_reaction_remove')			#checks for removal of reactions in #pick-roles
+@bot.listen('on_raw_reaction_remove')		#checks for removal of reactions in #pick-roles
 async def reaction_unlistener(payload):
-	global guild
-	chan = discord.utils.get(guild.text_channels, name="pick-roles")
 	sender = discord.utils.get(guild.members, id=payload.user_id)
+	# #pick-roles channel functionality
+	chan = discord.utils.get(guild.text_channels, name="pick-roles")
 	if payload.channel_id == chan.id and not sender.bot:
-		await chan.send("unreacted!")
+		hasRole = False
+		remRole = get_role_from_db(con, payload.message_id, payload.emoji.id)
+		remRole = discord.utils.get(guild.roles, id=remRole)
+		memRoleList = sender.roles
+		for i in memRoleList:
+			if i.id == remRole.id:
+				hasRole = True
+		if hasRole:
+			await sender.remove_roles(remRole)
+			await sender.send("You no longer have the '" + remRole.name + "' role!")
+
 
 class dnd(commands.Cog, name="DND related"):
 	def _init_(self, bot):
