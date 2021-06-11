@@ -73,6 +73,14 @@ async def register_reaction(message):
 				count += 1
 			await chan.send(str(count) + " new roles registered!")
 
+@bot.listen('on_raw_message_delete')			#checks for deleted messages
+async def remove_reactions(payload):
+	# #pick-roles channel functionality
+	chan = discord.utils.get(guild.text_channels, name="pick-roles")
+	if payload.channel_id == chan.id:
+		count = delete_role_from_db(con, payload.message_id)
+		await chan.send(str(count) + " roles removed from database!")
+
 @bot.listen('on_raw_reaction_add')			#checks for new reactions in #pick-roles
 async def reaction_listener(payload):
 	sender = discord.utils.get(guild.members, id=payload.user_id)
@@ -88,7 +96,7 @@ async def reaction_listener(payload):
 				hasRole = True
 		if not hasRole:
 			await sender.add_roles(reqRole)
-			await sender.send("You now have the '" + reqRole.name + "' role!")
+			await sender.send("You now have the '" + reqRole.name + "' role! :smile:")
 
 @bot.listen('on_raw_reaction_remove')		#checks for removal of reactions in #pick-roles
 async def reaction_unlistener(payload):
@@ -105,7 +113,7 @@ async def reaction_unlistener(payload):
 				hasRole = True
 		if hasRole:
 			await sender.remove_roles(remRole)
-			await sender.send("You no longer have the '" + remRole.name + "' role!")
+			await sender.send("You no longer have the '" + remRole.name + "' role! :frowning:")
 
 
 class dnd(commands.Cog, name="DND related"):

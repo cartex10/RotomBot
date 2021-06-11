@@ -55,12 +55,20 @@ def add_role_to_db(connection, message_id, role, emoji):		#add to database
 	cursor = connection.cursor()
 	cursor.execute("INSERT INTO rolereactions VALUES (?, ?, ?)", (message_id, role, emoji))
 	connection.commit()
-	return
 
 def get_role_from_db(connection, message_id, emoji):
 	cursor = connection.cursor()
 	cursor.execute("SELECT role FROM rolereactions WHERE message_id=? AND emoji=?", (message_id, emoji))
 	return cursor.fetchall()[0][0]
+
+def delete_role_from_db(connection, message_id):
+	cursor = connection.cursor()
+	count = 0
+	for i in cursor.execute("SELECT role FROM rolereactions WHERE message_id=?", (message_id,)):
+		count += 1
+	cursor.execute("DELETE FROM rolereactions WHERE message_id=?", (message_id,))
+	connection.commit()
+	return count
 
 ##### HELP TEXT #####
 def mem_join_text():
