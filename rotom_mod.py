@@ -73,11 +73,11 @@ def delete_role_from_db(connection, message_id):
 ##### HELP TEXT #####
 def mem_join_text():
 	msg = "Hello! Welcome to our lovely server! We hope you enjoy your time here. :smile: \n"
-	msg += "Before you do anything, I recommend you mute `#music-control` so you're not bombarded by music notifications."
+	msg += "Before you do anything, I recommend you mute `#music-control` so you're not bombarded by music notifications.\n"
 	msg += "To do this, just click the bell at the top of the window while looking at `#music-control`.\n\n"
-	msg += "Also, a bunch of channels are currently hidden behind some roles."
-	msg += "This is so that your not bombarded by notifications for games or other stuff you don't care about."
-	msg += "If there are hidden channels you want to be a part of, head on over to the `#pick-roles` channel,"
+	msg += "Also, a bunch of channels are currently hidden behind some roles.\n"
+	msg += "This is so that your not bombarded by notifications for games or other stuff you don't care about.\n"
+	msg += "If there are hidden channels you want to be a part of, head on over to the `#pick-roles` channel,\n"
 	msg += "where using the reactions, you can assign yourself whichever role you want.\n"
 	msg += "One role you should grab is `InWoburn`, which we use to ping people to hang out if they're in town\n\n"
 	msg += "I know that's a lot of information, but you only have to worry about this once.\n"
