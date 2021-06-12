@@ -15,7 +15,7 @@ load_dotenv()
 #guild_id = int(os.getenv('TEST_ID')) 		#Test server
 
 #on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.4 SUCCESSFULLY LOADED```"
-on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
+#on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
 base_activity = discord.Game(name="the !help waiting game")
 intents = discord.Intents.default()
