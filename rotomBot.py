@@ -17,7 +17,7 @@ load_dotenv()
 #on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.4.1 SUCCESSFULLY LOADED```"
 #on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
-base_activity = discord.Game(name="the !help waiting game")
+base_activity = discord.Activity(type=discord.ActivityType.listening, name="!help")
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix="!", status="online", activity=base_activity, intents=intents)
