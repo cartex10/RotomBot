@@ -14,7 +14,7 @@ load_dotenv()
 #guild_id = int(os.getenv('GUILD_ID')) 		#Actual server
 #guild_id = int(os.getenv('TEST_ID')) 		#Test server
 
-#on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.4 SUCCESSFULLY LOADED```"
+#on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.4.1 SUCCESSFULLY LOADED```"
 #on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
 base_activity = discord.Game(name="the !help waiting game")
@@ -93,6 +93,15 @@ async def remove_reactions(payload):
 	if payload.channel_id == chan.id:
 		count = delete_role_from_db(con, payload.message_id)
 		await chan.send(str(count) + " roles removed from database!")
+
+@bot.listen('on_raw_message_edit')			#check for editted messages
+async def edit_reactions(payload):
+	# #pick-roles channel functionality
+	chan = discord.utils.get(guild.text_channels, name="pick-roles")
+	if payload.channel_id == chan.id:
+		msg = await chan.fetch_message(payload.message_id)
+		await msg.clear_reactions()
+		await register_reaction(msg)
 
 @bot.listen('on_raw_reaction_add')			#checks for new reactions in #pick-roles
 async def reaction_listener(payload):
