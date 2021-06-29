@@ -101,6 +101,7 @@ async def edit_reactions(payload):
 	if payload.channel_id == chan.id:
 		msg = await chan.fetch_message(payload.message_id)
 		await msg.clear_reactions()
+		await remove_reactions(msg)
 		await register_reaction(msg)
 
 @bot.listen('on_raw_reaction_add')			#checks for new reactions in #pick-roles
