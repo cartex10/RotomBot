@@ -62,11 +62,11 @@ async def register_reaction(message):
 				if type(role).__name__ == "NoneType":
 					await chan.send("ERROR: Role #" + str(count+1) + " not found")
 					return
-				role = str(role.id)
+				role = role.id
 				tempsplit = tempsplit[1].split(":")
 				reaction = discord.utils.get(guild.emojis, id=int(tempsplit[2][:-1]))
 				await message.add_reaction(reaction)
-				add_role_to_db(con, str(message.id), role, str(tempsplit[2][:-1]))
+				add_role_to_db(con, message.id, role, tempsplit[2][:-1])
 				count += 1
 			await chan.send(str(count) + " new roles registered!")
 	# #server-suggestions channel functionality
@@ -111,7 +111,7 @@ async def reaction_listener(payload):
 	chan = discord.utils.get(guild.text_channels, name="pick-roles")
 	if payload.channel_id == chan.id and not sender.bot:
 		hasRole = False
-		reqRole = get_role_from_db(con, str(payload.message_id), str(payload.emoji.id))
+		reqRole = get_role_from_db(con, payload.message_id, payload.emoji.id)
 		reqRole = discord.utils.get(guild.roles, id=reqRole)
 		memRoleList = sender.roles
 		for i in memRoleList:

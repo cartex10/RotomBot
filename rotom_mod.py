@@ -52,16 +52,24 @@ def ddc_decrement(connection):				#decrement ddc
 	return counter
 
 def add_role_to_db(connection, message_id, role, emoji):		#add to database
+	message_id = str(message_id)
+	role = str(role)
+	emoji = str(emoji)
 	cursor = connection.cursor()
 	cursor.execute("INSERT INTO rolereactions VALUES (?, ?, ?)", (message_id, role, emoji))
 	connection.commit()
 
 def get_role_from_db(connection, message_id, emoji):
+	message_id = str(message_id)
+	role = str(role)
+	emoji = str(emoji)
 	cursor = connection.cursor()
 	cursor.execute("SELECT role FROM rolereactions WHERE message_id=? AND emoji=?", (message_id, emoji))
 	return cursor.fetchall()[0][0]
 
 def delete_role_from_db(connection, message_id):
+	message_id = str(message_id)
+	role = str(role)
 	cursor = connection.cursor()
 	count = 0
 	for i in cursor.execute("SELECT role FROM rolereactions WHERE message_id=?", (message_id,)):
