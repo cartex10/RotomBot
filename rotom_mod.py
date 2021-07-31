@@ -59,7 +59,7 @@ def add_role_to_db(connection, message_id, role, emoji):		#add to database
 def get_role_from_db(connection, message_id, emoji):
 	cursor = connection.cursor()
 	cursor.execute("SELECT role FROM rolereactions WHERE message_id=? AND emoji=?", (message_id, emoji,))
-	return cursor.fetchall()[0]
+	return cursor.fetchall()[0][0]
 
 def delete_role_from_db(connection, message_id):
 	cursor = connection.cursor()

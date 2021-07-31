@@ -130,8 +130,8 @@ async def reaction_unlistener(payload):
 	chan = discord.utils.get(guild.text_channels, name="pick-roles")
 	if payload.channel_id == chan.id and not sender.bot:
 		hasRole = False
-		remRole = get_role_from_db(con, int(payload.message_id), int(payload.emoji.id))
-		remRole = discord.utils.get(guild.roles, id=remRole)
+		remRole = get_role_from_db(con, payload.message_id, payload.emoji.id)
+		remRole = discord.utils.get(guild.roles, id=int(remRole))
 		memRoleList = sender.roles
 		for i in memRoleList:
 			if i.id == remRole.id:
