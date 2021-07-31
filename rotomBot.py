@@ -106,13 +106,14 @@ async def edit_reactions(payload):
 
 @bot.listen('on_raw_reaction_add')			#checks for new reactions in #pick-roles
 async def reaction_listener(payload):
+	global guild
 	sender = discord.utils.get(guild.members, id=payload.user_id)
 	# #pick-roles channel functionality
 	chan = discord.utils.get(guild.text_channels, name="pick-roles")
 	if payload.channel_id == chan.id and not sender.bot:
 		hasRole = False
 		reqRole = get_role_from_db(con, payload.message_id, payload.emoji.id)
-		reqRole = discord.utils.get(guild.roles, id=reqRole)
+		reqRole = discord.utils.get(guild.roles, id=int(reqRole))
 		memRoleList = sender.roles
 		for i in memRoleList:
 			if i.id == reqRole.id:
