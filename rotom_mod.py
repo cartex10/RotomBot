@@ -70,6 +70,130 @@ def delete_role_from_db(connection, message_id):
 	connection.commit()
 	return count
 
+##### VIEWS #####
+class InventoryView(discord.ui.View):
+	def __init__(self, ctx, msg):
+		super().__init__()
+		self.timeout = 300
+		self.value = None
+		self.ctx = ctx
+		self.msg = msg
+		self.selected = 0
+		self.inventories = ["inven1", "inven2", "inven3"]
+	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary)
+	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
+		if self.selected == 0:
+			return
+		msg_str = "```SAVED INVENTORIES\n\n"
+		self.selected -= 1
+		for i in self.inventories:
+			if self.selected == self.inventories.index(i):
+				msg_str += ">>" + i + "<<\n"
+			else:
+				msg_str += i + "\n"
+		msg_str += "```"
+		await self.msg.edit(msg_str)
+	@discord.ui.button(label='Down', style=discord.ButtonStyle.secondary)
+	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
+		if self.selected == len(self.inventories)-1:
+			return
+		msg_str = "```SAVED INVENTORIES\n\n"
+		self.selected += 1
+		for i in self.inventories:
+			if self.selected == self.inventories.index(i):
+				msg_str += ">>" + i + "<<\n"
+			else:
+				msg_str += i + "\n"
+		msg_str += "```"
+		await self.msg.edit(msg_str)
+	@discord.ui.button(label='Select', style=discord.ButtonStyle.green)
+	async def select(self, button: discord.ui.Button, interaction: discord.Interaction):
+		contents = ["item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8"]
+		first = True
+		msg_str = "```INVENTORY CONTENTS\n\n"
+		for i in contents:
+			if first:
+				msg_str += str(contents.index(i) + 1) + ". " + ">>" + i + "<<\n"
+				first = False
+			else:
+				msg_str += str(contents.index(i) + 1) + ". " + i + "\n"
+		msg_str += "```"
+		msg = await self.ctx.send(msg_str)
+		view = Inventory2View(self.ctx, msg)
+		await msg.edit(view=view)
+		self.stop()
+	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red)
+	async def exit(self, button: discord.ui.Button, interaction: discord.Interaction):
+		self.stop()
+
+class Inventory2View(discord.ui.View):
+	def __init__(self, ctx, msg):
+		super().__init__()
+		self.timeout = 300
+		self.value = None
+		self.ctx = ctx
+		self.msg = msg
+		self.selected = 0
+		self.contents = ["item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8"]
+		self.bank = [0, 0, 0]
+	@discord.ui.button(label='Bank', style=discord.ButtonStyle.primary, row=0)
+	async def bank(self, button: discord.ui.Button, interaction: discord.Interaction):
+		self.stop()
+	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary, row=1)
+	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
+		if self.selected == 0:
+			return
+		msg_str = "```INVENTORY CONTENTS\n\n"
+		self.selected -= 1
+		for i in self.contents:
+			if self.selected == self.contents.index(i):
+				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i + "<<\n"
+			else:
+				msg_str += str(self.contents.index(i) + 1) + ". " + i + "\n"
+		msg_str += "```"
+		await self.msg.edit(msg_str)
+	@discord.ui.button(label='Down', style=discord.ButtonStyle.secondary, row=1)
+	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
+		if self.selected == len(self.contents)-1:
+			return
+		msg_str = "```INVENTORY CONTENTS\n\n"
+		self.selected += 1
+		for i in self.contents:
+			if self.selected == self.contents.index(i):
+				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i + "<<\n"
+			else:
+				msg_str += str(self.contents.index(i) + 1) + ". " + i + "\n"
+		msg_str += "```"
+		await self.msg.edit(msg_str)
+	@discord.ui.button(label='Up 5', style=discord.ButtonStyle.secondary, row=2)
+	async def upfive(self, button: discord.ui.Button, interaction: discord.Interaction):
+		if self.selected <= 4:
+			self.selected = 0
+		else:
+			self.selected -= 5
+		msg_str = "```INVENTORY CONTENTS\n\n"
+		for i in self.contents:
+			if self.selected == self.contents.index(i):
+				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i + "<<\n"
+			else:
+				msg_str += str(self.contents.index(i) + 1) + ". " + i + "\n"
+		msg_str += "```"
+		await self.msg.edit(msg_str)
+	@discord.ui.button(label='Down 5', style=discord.ButtonStyle.secondary, row=2)
+	async def downfive(self, button: discord.ui.Button, interaction: discord.Interaction):
+		if self.selected >= len(self.contents)-6:
+			self.selected = len(self.contents)-1
+		else:
+			self.selected += 5
+		msg_str = "```INVENTORY CONTENTS\n\n"
+		for i in self.contents:
+			if self.selected == self.contents.index(i):
+				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i + "<<\n"
+			else:
+				msg_str += str(self.contents.index(i) + 1) + ". " + i + "\n"
+		msg_str += "```"
+		await self.msg.edit(msg_str)
+
 ##### HELP TEXT #####
 def mem_join_text():
 	msg = "Hello! Welcome to our lovely server! We hope you enjoy your time here. :smile: \n"

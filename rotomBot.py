@@ -8,14 +8,15 @@ import random
 import math
 import time
 
+print("Starting bot with discord.py v" + discord.__version__)
 load_dotenv()
 #TOKEN = os.getenv('DISCORD_TOKEN')			#Actual bot token
-#TOKEN = os.getenv('TEST_TOKEN')			#Test bot token
+TOKEN = os.getenv('TEST_TOKEN')			#Test bot token
 #guild_id = int(os.getenv('GUILD_ID')) 		#Actual server
-#guild_id = int(os.getenv('TEST_ID')) 		#Test server
+guild_id = int(os.getenv('TEST_ID')) 		#Test server
 
 #on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.4.1 SUCCESSFULLY LOADED```"
-#on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
+on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
 base_activity = discord.Activity(type=discord.ActivityType.listening, name="!help")
 intents = discord.Intents.default()
@@ -349,6 +350,24 @@ class dnd(commands.Cog, name="DND related"):
 		for i in nums:
 			await msg.add_reaction(i)
 
+	@commands.command(help="Check a party's inventory or bank")
+	async def inventory(self, ctx, party=None):
+		if(party == None):
+			inventories = ["inven1", "inven2", "inven3"]
+			msg_str = "```SAVED INVENTORIES\n\n"
+			first = True
+			for i in inventories:
+				if first:
+					msg_str += ">>" + i + "<<\n"
+					first = False
+				else:
+					msg_str += i + "\n"
+			msg_str += "```"
+			msg = await ctx.send(msg_str)
+			view = InventoryView(ctx, msg)
+			await msg.edit(view=view)
+			await view.wait()
+			await msg.delete()
 
 class server(commands.Cog, name="Server/Bot Related"):
 	def _init_(self, bot):
