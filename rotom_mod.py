@@ -85,6 +85,11 @@ def get_parties_from_db(connection):
 	cursor.execute("SELECT DISTINCT party FROM inventories")
 	return cursor.fetchall()
 
+def remove_item_from_db(connection, party, item):
+	cursor = connection.cursor()
+	cursor.execute("DELETE FROM inventories WHERE party=? AND item=?", (party, item))
+	connection.commit()
+
 ##### VIEWS #####
 class InventoryView(discord.ui.View):
 	def __init__(self, ctx, msg, con):
@@ -125,7 +130,6 @@ class InventoryView(discord.ui.View):
 	@discord.ui.button(label='Select', style=discord.ButtonStyle.green)
 	async def select(self, button: discord.ui.Button, interaction: discord.Interaction):
 		contents = get_items_from_db(self.con, str(self.inventories[self.selected][0]))
-		print(contents)
 		first = True
 		msg_str = "```INVENTORY CONTENTS\n\n"
 		for i in contents:
@@ -152,7 +156,8 @@ class Inventory2View(discord.ui.View):
 		self.msg = msg
 		self.selected = 0
 		self.con = con
-		self.contents = get_items_from_db(self.con, party)
+		self.party = party
+		self.contents = get_items_from_db(self.con, self.party)
 		self.bank = [0, 0, 0]
 	@discord.ui.button(label='Bank', style=discord.ButtonStyle.primary, row=0)
 	async def bank(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -221,8 +226,20 @@ class Inventory2View(discord.ui.View):
 		#pass
 	@discord.ui.button(label='Remove', style=discord.ButtonStyle.red, row=3)
 	async def delete_item(self, button: discord.ui.Button, interaction: discord.Interaction):
-		#TODO
-		pass
+		remove_item_from_db(self.con, self.party, self.contents[self.selected][0])
+		self.contents = get_items_from_db(self.con, self.party)
+		if self.selected == 0:
+			self.selected = 1
+		msg_str = "```INVENTORY CONTENTS\n\n"
+		self.selected -= 1
+		for i in self.contents:
+			if self.selected == self.contents.index(i):
+				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
+			else:
+				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
+		msg_str += "```"
+		await self.msg.edit(msg_str)
+		
 
 ##### HELP TEXT #####
 def mem_join_text():
