@@ -353,18 +353,18 @@ class dnd(commands.Cog, name="DND related"):
 	@commands.command(help="Check a party's inventory or bank")
 	async def inventory(self, ctx, party=None):
 		if(party == None):
-			inventories = ["inven1", "inven2", "inven3"]
+			inventories = get_parties_from_db(con)
 			msg_str = "```SAVED INVENTORIES\n\n"
 			first = True
 			for i in inventories:
 				if first:
-					msg_str += ">>" + i + "<<\n"
+					msg_str += ">>" + i[0] + "<<\n"
 					first = False
 				else:
-					msg_str += i + "\n"
+					msg_str += i[0] + "\n"
 			msg_str += "```"
 			msg = await ctx.send(msg_str)
-			view = InventoryView(ctx, msg)
+			view = InventoryView(ctx, msg, con)
 			await msg.edit(view=view)
 			await view.wait()
 			await msg.delete()

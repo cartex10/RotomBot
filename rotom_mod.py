@@ -70,16 +70,32 @@ def delete_role_from_db(connection, message_id):
 	connection.commit()
 	return count
 
+def add_item_to_db(connection, party, item, value=None, backpack=None):
+	cursor = connection.cursor()
+	cursor.execute("INSERT INTO inventories VALUES (?, ?, ?)", (party, item, backpack))
+	connection.commit()
+
+def get_items_from_db(connection, party):
+	cursor = connection.cursor()
+	cursor.execute("SELECT item FROM inventories WHERE party=?", (party,))
+	return cursor.fetchall()
+
+def get_parties_from_db(connection):
+	cursor = connection.cursor()
+	cursor.execute("SELECT DISTINCT party FROM inventories")
+	return cursor.fetchall()
+
 ##### VIEWS #####
 class InventoryView(discord.ui.View):
-	def __init__(self, ctx, msg):
+	def __init__(self, ctx, msg, con):
 		super().__init__()
 		self.timeout = 300
 		self.value = None
 		self.ctx = ctx
 		self.msg = msg
 		self.selected = 0
-		self.inventories = ["inven1", "inven2", "inven3"]
+		self.con = con
+		self.inventories = get_parties_from_db(self.con)
 	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected == 0:
@@ -88,9 +104,9 @@ class InventoryView(discord.ui.View):
 		self.selected -= 1
 		for i in self.inventories:
 			if self.selected == self.inventories.index(i):
-				msg_str += ">>" + i + "<<\n"
+				msg_str += ">>" + i[0] + "<<\n"
 			else:
-				msg_str += i + "\n"
+				msg_str += i[0] + "\n"
 		msg_str += "```"
 		await self.msg.edit(msg_str)
 	@discord.ui.button(label='Down', style=discord.ButtonStyle.secondary)
@@ -101,25 +117,26 @@ class InventoryView(discord.ui.View):
 		self.selected += 1
 		for i in self.inventories:
 			if self.selected == self.inventories.index(i):
-				msg_str += ">>" + i + "<<\n"
+				msg_str += ">>" + i[0] + "<<\n"
 			else:
-				msg_str += i + "\n"
+				msg_str += i[0] + "\n"
 		msg_str += "```"
 		await self.msg.edit(msg_str)
 	@discord.ui.button(label='Select', style=discord.ButtonStyle.green)
 	async def select(self, button: discord.ui.Button, interaction: discord.Interaction):
-		contents = ["item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8"]
+		contents = get_items_from_db(self.con, str(self.inventories[self.selected][0]))
+		print(contents)
 		first = True
 		msg_str = "```INVENTORY CONTENTS\n\n"
 		for i in contents:
 			if first:
-				msg_str += str(contents.index(i) + 1) + ". " + ">>" + i + "<<\n"
+				msg_str += str(contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
 				first = False
 			else:
-				msg_str += str(contents.index(i) + 1) + ". " + i + "\n"
+				msg_str += str(contents.index(i) + 1) + ". " + i[0] + "\n"
 		msg_str += "```"
 		msg = await self.ctx.send(msg_str)
-		view = Inventory2View(self.ctx, msg)
+		view = Inventory2View(self.ctx, msg, self.con, str(self.inventories[self.selected][0]))
 		await msg.edit(view=view)
 		self.stop()
 	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red)
@@ -127,14 +144,15 @@ class InventoryView(discord.ui.View):
 		self.stop()
 
 class Inventory2View(discord.ui.View):
-	def __init__(self, ctx, msg):
+	def __init__(self, ctx, msg, con, party):
 		super().__init__()
 		self.timeout = 300
 		self.value = None
 		self.ctx = ctx
 		self.msg = msg
 		self.selected = 0
-		self.contents = ["item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8"]
+		self.con = con
+		self.contents = get_items_from_db(self.con, party)
 		self.bank = [0, 0, 0]
 	@discord.ui.button(label='Bank', style=discord.ButtonStyle.primary, row=0)
 	async def bank(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -147,9 +165,9 @@ class Inventory2View(discord.ui.View):
 		self.selected -= 1
 		for i in self.contents:
 			if self.selected == self.contents.index(i):
-				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i + "<<\n"
+				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
 			else:
-				msg_str += str(self.contents.index(i) + 1) + ". " + i + "\n"
+				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
 		msg_str += "```"
 		await self.msg.edit(msg_str)
 	@discord.ui.button(label='Down', style=discord.ButtonStyle.secondary, row=1)
@@ -160,9 +178,9 @@ class Inventory2View(discord.ui.View):
 		self.selected += 1
 		for i in self.contents:
 			if self.selected == self.contents.index(i):
-				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i + "<<\n"
+				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
 			else:
-				msg_str += str(self.contents.index(i) + 1) + ". " + i + "\n"
+				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
 		msg_str += "```"
 		await self.msg.edit(msg_str)
 	@discord.ui.button(label='Up 5', style=discord.ButtonStyle.secondary, row=2)
@@ -174,9 +192,9 @@ class Inventory2View(discord.ui.View):
 		msg_str = "```INVENTORY CONTENTS\n\n"
 		for i in self.contents:
 			if self.selected == self.contents.index(i):
-				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i + "<<\n"
+				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
 			else:
-				msg_str += str(self.contents.index(i) + 1) + ". " + i + "\n"
+				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
 		msg_str += "```"
 		await self.msg.edit(msg_str)
 	@discord.ui.button(label='Down 5', style=discord.ButtonStyle.secondary, row=2)
@@ -188,9 +206,9 @@ class Inventory2View(discord.ui.View):
 		msg_str = "```INVENTORY CONTENTS\n\n"
 		for i in self.contents:
 			if self.selected == self.contents.index(i):
-				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i + "<<\n"
+				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
 			else:
-				msg_str += str(self.contents.index(i) + 1) + ". " + i + "\n"
+				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
 		msg_str += "```"
 		await self.msg.edit(msg_str)
 	@discord.ui.button(label='Add Item', style=discord.ButtonStyle.green, row=3)
