@@ -193,6 +193,18 @@ class Inventory2View(discord.ui.View):
 				msg_str += str(self.contents.index(i) + 1) + ". " + i + "\n"
 		msg_str += "```"
 		await self.msg.edit(msg_str)
+	@discord.ui.button(label='Add Item', style=discord.ButtonStyle.green, row=3)
+	async def add_item(self, button: discord.ui.Button, interaction: discord.Interaction):
+		pass
+		#TODO
+	#@discord.ui.button(label='Add Backpack', style=discord.ButtonStyle.green, row=3)
+	#async def add_backpack(self, button: discord.ui.Button, interaction: discord.Interaction):
+		#TODO
+		#pass
+	@discord.ui.button(label='Remove', style=discord.ButtonStyle.red, row=3)
+	async def delete_item(self, button: discord.ui.Button, interaction: discord.Interaction):
+		#TODO
+		pass
 
 ##### HELP TEXT #####
 def mem_join_text():
