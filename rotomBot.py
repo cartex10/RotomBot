@@ -102,7 +102,6 @@ async def edit_reactions(payload):
 	chan = discord.utils.get(guild.text_channels, name="pick-roles")
 	if payload.channel_id == chan.id:
 		msg = await chan.fetch_message(payload.message_id)
-		await msg.clear_reactions()
 		await remove_reactions(payload)
 		await register_reaction(msg)
 
