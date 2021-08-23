@@ -93,7 +93,8 @@ async def remove_reactions(payload):
 	chan = discord.utils.get(guild.text_channels, name="pick-roles")
 	if payload.channel_id == chan.id:
 		count = delete_role_from_db(con, payload.message_id)
-		await chan.send(str(count) + " roles removed from database!")
+		if count > 0:
+			await chan.send(str(count) + " roles removed from database!")
 
 @bot.listen('on_raw_message_edit')			#check for editted messages
 async def edit_reactions(payload):
@@ -102,7 +103,7 @@ async def edit_reactions(payload):
 	if payload.channel_id == chan.id:
 		msg = await chan.fetch_message(payload.message_id)
 		await msg.clear_reactions()
-		await remove_reactions(msg)
+		await remove_reactions(payload)
 		await register_reaction(msg)
 
 @bot.listen('on_raw_reaction_add')			#checks for new reactions in #pick-roles
