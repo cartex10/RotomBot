@@ -364,7 +364,7 @@ class dnd(commands.Cog, name="DND related"):
 					msg_str += i[0] + "\n"
 			msg_str += "```"
 			msg = await ctx.send(msg_str)
-			view = InventoryView(ctx, msg, con)
+			view = InventoryView(bot, ctx, msg, con)
 			await msg.edit(view=view)
 			await view.wait()
 			await msg.delete()

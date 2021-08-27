@@ -72,7 +72,7 @@ def delete_role_from_db(connection, message_id):
 
 def add_item_to_db(connection, party, item, value=None, backpack=None):
 	cursor = connection.cursor()
-	cursor.execute("INSERT INTO inventories VALUES (?, ?, ?)", (party, item, backpack))
+	cursor.execute("INSERT INTO inventories VALUES (?, ?, ?, ?)", (party, item, backpack, value))
 	connection.commit()
 
 def get_items_from_db(connection, party):
@@ -92,7 +92,7 @@ def remove_item_from_db(connection, party, item):
 
 ##### VIEWS #####
 class InventoryView(discord.ui.View):
-	def __init__(self, ctx, msg, con):
+	def __init__(self, bot, ctx, msg, con):
 		super().__init__()
 		self.timeout = 300
 		self.value = None
@@ -100,6 +100,7 @@ class InventoryView(discord.ui.View):
 		self.msg = msg
 		self.selected = 0
 		self.con = con
+		self.bot = bot
 		self.inventories = get_parties_from_db(self.con)
 	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -140,7 +141,7 @@ class InventoryView(discord.ui.View):
 				msg_str += str(contents.index(i) + 1) + ". " + i[0] + "\n"
 		msg_str += "```"
 		msg = await self.ctx.send(msg_str)
-		view = Inventory2View(self.ctx, msg, self.con, str(self.inventories[self.selected][0]))
+		view = Inventory2View(self.bot, self.ctx, msg, self.con, str(self.inventories[self.selected][0]))
 		await msg.edit(view=view)
 		self.stop()
 	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red)
@@ -148,7 +149,7 @@ class InventoryView(discord.ui.View):
 		self.stop()
 
 class Inventory2View(discord.ui.View):
-	def __init__(self, ctx, msg, con, party):
+	def __init__(self, bot, ctx, msg, con, party):
 		super().__init__()
 		self.timeout = 300
 		self.value = None
@@ -157,10 +158,12 @@ class Inventory2View(discord.ui.View):
 		self.selected = 0
 		self.con = con
 		self.party = party
+		self.bot = bot
 		self.contents = get_items_from_db(self.con, self.party)
 		self.bank = [0, 0, 0]
 	@discord.ui.button(label='Bank', style=discord.ButtonStyle.primary, row=0)
 	async def bank(self, button: discord.ui.Button, interaction: discord.Interaction):
+		#TODO
 		self.stop()
 	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary, row=1)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -218,8 +221,37 @@ class Inventory2View(discord.ui.View):
 		await self.msg.edit(msg_str)
 	@discord.ui.button(label='Add Item', style=discord.ButtonStyle.green, row=3)
 	async def add_item(self, button: discord.ui.Button, interaction: discord.Interaction):
-		pass
-		#TODO
+		channel = self.ctx.channel
+		text = "```Respond with which item you would like to add\n"
+		text += "If it has a numerical value, add a space after with only the value\n"
+		text += "Send 'CANCEL' to add nothing```"
+		await self.ctx.send(text)
+		def check(m):
+			return m.channel == self.ctx.channel
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.ctx.send("Cancelling...")
+		else:
+			if msg.content != "CANCEL":
+				splitMSG = msg.content.split(", ")
+				if len(splitMSG) == 1:
+					add_item_to_db(self.con, self.party, splitMSG[0])
+					await self.ctx.send(splitMSG[0] + " added to the inventory")
+				else:
+					add_item_to_db(self.con, self.party, splitMSG[0], splitMSG[1])
+					await self.ctx.send(splitMSG[1] + " " + splitMSG[0] + " added to the inventory")
+			else:
+				await self.ctx.send("Cancelling...")
+			self.contents = get_items_from_db(self.con, self.party)
+			msg_str = "```INVENTORY CONTENTS\n\n"
+			for i in self.contents:
+				if self.selected == self.contents.index(i):
+					msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
+				else:
+					msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
+			msg_str += "```"
+		await self.msg.edit(msg_str)
 	#@discord.ui.button(label='Add Backpack', style=discord.ButtonStyle.green, row=3)
 	#async def add_backpack(self, button: discord.ui.Button, interaction: discord.Interaction):
 		#TODO
@@ -239,7 +271,6 @@ class Inventory2View(discord.ui.View):
 				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
 		msg_str += "```"
 		await self.msg.edit(msg_str)
-		
 
 ##### HELP TEXT #####
 def mem_join_text():
