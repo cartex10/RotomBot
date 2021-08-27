@@ -102,32 +102,28 @@ class InventoryView(discord.ui.View):
 		self.con = con
 		self.bot = bot
 		self.inventories = get_parties_from_db(self.con)
+	async def refresh(self):
+		msg_str = "```SAVED INVENTORIES\n\n"
+		for i in self.inventories:
+			if self.selected == self.inventories.index(i):
+				msg_str += ">>" + i[0] + "<<\n"
+			else:
+				msg_str += i[0] + "\n"
+		msg_str += "```"
+		await self.msg.edit(msg_str)
+		await self.ctx.send("asdf")
 	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected == 0:
 			return
-		msg_str = "```SAVED INVENTORIES\n\n"
 		self.selected -= 1
-		for i in self.inventories:
-			if self.selected == self.inventories.index(i):
-				msg_str += ">>" + i[0] + "<<\n"
-			else:
-				msg_str += i[0] + "\n"
-		msg_str += "```"
-		await self.msg.edit(msg_str)
+		await self.refresh()
 	@discord.ui.button(label='Down', style=discord.ButtonStyle.secondary)
 	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected == len(self.inventories)-1:
 			return
-		msg_str = "```SAVED INVENTORIES\n\n"
 		self.selected += 1
-		for i in self.inventories:
-			if self.selected == self.inventories.index(i):
-				msg_str += ">>" + i[0] + "<<\n"
-			else:
-				msg_str += i[0] + "\n"
-		msg_str += "```"
-		await self.msg.edit(msg_str)
+		await self.refresh()
 	@discord.ui.button(label='Select', style=discord.ButtonStyle.green)
 	async def select(self, button: discord.ui.Button, interaction: discord.Interaction):
 		contents = get_items_from_db(self.con, str(self.inventories[self.selected][0]))
@@ -160,65 +156,45 @@ class Inventory2View(discord.ui.View):
 		self.party = party
 		self.bot = bot
 		self.contents = get_items_from_db(self.con, self.party)
-		self.bank = [0, 0, 0]
-	@discord.ui.button(label='Bank', style=discord.ButtonStyle.primary, row=0)
-	async def bank(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def refresh(self):
+		msg_str = "```INVENTORY CONTENTS\n\n"
+		for i in self.contents:
+			if self.selected == self.contents.index(i):
+				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
+			else:
+				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
+		msg_str += "```"
+		await self.msg.edit(msg_str)
+	#@discord.ui.button(label='Bank', style=discord.ButtonStyle.primary, row=0)
+	#async def bank(self, button: discord.ui.Button, interaction: discord.Interaction):
 		#TODO
 		self.stop()
 	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary, row=1)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected == 0:
 			return
-		msg_str = "```INVENTORY CONTENTS\n\n"
 		self.selected -= 1
-		for i in self.contents:
-			if self.selected == self.contents.index(i):
-				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
-			else:
-				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
-		msg_str += "```"
-		await self.msg.edit(msg_str)
+		await self.refresh()
 	@discord.ui.button(label='Down', style=discord.ButtonStyle.secondary, row=1)
 	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected == len(self.contents)-1:
 			return
-		msg_str = "```INVENTORY CONTENTS\n\n"
 		self.selected += 1
-		for i in self.contents:
-			if self.selected == self.contents.index(i):
-				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
-			else:
-				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
-		msg_str += "```"
-		await self.msg.edit(msg_str)
+		await self.refresh()
 	@discord.ui.button(label='Up 5', style=discord.ButtonStyle.secondary, row=2)
 	async def upfive(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected <= 4:
 			self.selected = 0
 		else:
 			self.selected -= 5
-		msg_str = "```INVENTORY CONTENTS\n\n"
-		for i in self.contents:
-			if self.selected == self.contents.index(i):
-				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
-			else:
-				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
-		msg_str += "```"
-		await self.msg.edit(msg_str)
+		await self.refresh()
 	@discord.ui.button(label='Down 5', style=discord.ButtonStyle.secondary, row=2)
 	async def downfive(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected >= len(self.contents)-6:
 			self.selected = len(self.contents)-1
 		else:
 			self.selected += 5
-		msg_str = "```INVENTORY CONTENTS\n\n"
-		for i in self.contents:
-			if self.selected == self.contents.index(i):
-				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
-			else:
-				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
-		msg_str += "```"
-		await self.msg.edit(msg_str)
+		await self.refresh()
 	@discord.ui.button(label='Add Item', style=discord.ButtonStyle.green, row=3)
 	async def add_item(self, button: discord.ui.Button, interaction: discord.Interaction):
 		channel = self.ctx.channel
@@ -243,15 +219,8 @@ class Inventory2View(discord.ui.View):
 					await self.ctx.send(splitMSG[1] + " " + splitMSG[0] + " added to the inventory")
 			else:
 				await self.ctx.send("Cancelling...")
-			self.contents = get_items_from_db(self.con, self.party)
-			msg_str = "```INVENTORY CONTENTS\n\n"
-			for i in self.contents:
-				if self.selected == self.contents.index(i):
-					msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
-				else:
-					msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
-			msg_str += "```"
-		await self.msg.edit(msg_str)
+			self.contents =get_items_from_db(self.con, self.party)
+			await self.refresh()
 	#@discord.ui.button(label='Add Backpack', style=discord.ButtonStyle.green, row=3)
 	#async def add_backpack(self, button: discord.ui.Button, interaction: discord.Interaction):
 		#TODO
@@ -262,15 +231,8 @@ class Inventory2View(discord.ui.View):
 		self.contents = get_items_from_db(self.con, self.party)
 		if self.selected == 0:
 			self.selected = 1
-		msg_str = "```INVENTORY CONTENTS\n\n"
 		self.selected -= 1
-		for i in self.contents:
-			if self.selected == self.contents.index(i):
-				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
-			else:
-				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
-		msg_str += "```"
-		await self.msg.edit(msg_str)
+		refresh()
 
 ##### HELP TEXT #####
 def mem_join_text():
