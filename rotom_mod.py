@@ -77,7 +77,7 @@ def add_item_to_db(connection, party, item, value=None, backpack=None):
 
 def get_items_from_db(connection, party):
 	cursor = connection.cursor()
-	cursor.execute("SELECT item FROM inventories WHERE party=? and item!=?", (party, "TITLE"))
+	cursor.execute("SELECT item FROM inventories WHERE party=? AND item!=?", (party, "TITLE"))
 	return cursor.fetchall()
 
 def get_parties_from_db(connection):
@@ -149,9 +149,9 @@ class InventoryView(discord.ui.View):
 		self.stop()
 	@discord.ui.button(label='Create New', style=discord.ButtonStyle.green, row=3)
 	async def create(self, button: discord.ui.Button, interaction: discord.Interaction):
-		text = "```Respond with the name of the new inventory\n"
-		text += "Send 'CANCEL' to create nothing```"
-		await self.ctx.send(text)
+		text = "Respond with the name of the new inventory\n"
+		text += "Send 'CANCEL' to create nothing"
+		await self.msg.edit(self.msg.content + text)
 		def check(m):
 			return m.channel == self.ctx.channel
 		try:
@@ -159,18 +159,21 @@ class InventoryView(discord.ui.View):
 		except asyncio.TimeoutError:
 			await self.ctx.send("Cancelling...")
 		else:
-			if msg.content != "CANCEL":
+			content = msg.content
+			await msg.delete()
+			if content != "CANCEL":
 				add_item_to_db(self.con, msg.content, "TITLE")
-				await self.ctx.send(msg.content + " created")
+				self.inventories = get_parties_from_db(self.con)
+				await self.update()
+				await self.msg.edit(self.msg.content + msg.content + " created")
 			else:
-				await self.ctx.send("Cancelling...")
-			self.inventories = get_parties_from_db(self.con)
-			await self.update()
+				await self.update()
+				await self.msg.edit(self.msg.content + "Cancelling...")
 	@discord.ui.button(label='Delete', style=discord.ButtonStyle.red, row=3)
 	async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
-		text = "```Are you sure you want to delete this inventory and all of its contents?\n"
-		text += "Send 'YES' to delete, or anything else to cancel```"
-		await self.ctx.send(text)
+		text = "Are you sure you want to delete this inventory and all of its contents?\n"
+		text += "Send 'YES' to delete, or anything else to cancel"
+		await self.msg.edit(self.msg.content + text)
 		def check(m):
 			return m.channel == self.ctx.channel
 		try:
@@ -178,15 +181,19 @@ class InventoryView(discord.ui.View):
 		except asyncio.TimeoutError:
 			await self.ctx.send("Cancelling...")
 		else:
-			if msg.content == "YES":
-				delete_inventory(self.con, self.inventories[self.selected][0])
-				await self.ctx.send(self.inventories[self.selected][0] + " deleted")
-				if self.selected == len(self.inventories)-1:
+			content = msg.content
+			await msg.delete()
+			if content == "YES":
+				toDelete = self.inventories[self.selected][0]
+				delete_inventory(self.con, toDelete)
+				self.inventories = get_parties_from_db(self.con)
+				if self.selected == len(self.inventories):
 					self.selected -= 1
+				await self.update()
+				await self.msg.edit(self.msg.content + toDelete + " deleted")
 			else:
-				await self.ctx.send("Cancelling...")
-			self.inventories = get_parties_from_db(self.con)
-			await self.update()
+				await self.update()
+				await self.msg.edit(self.msg.content + "Cancelling...")
 
 class Inventory2View(discord.ui.View):
 	def __init__(self, bot, ctx, msg, con, party):
@@ -240,11 +247,10 @@ class Inventory2View(discord.ui.View):
 		await self.update()
 	@discord.ui.button(label='Add Item', style=discord.ButtonStyle.green, row=3)
 	async def add_item(self, button: discord.ui.Button, interaction: discord.Interaction):
-		channel = self.ctx.channel
-		text = "```Respond with which item you would like to add\n"
+		text = "Respond with which item you would like to add\n"
 		text += "If it has a numerical value, add a space after with only the value\n"
-		text += "Send 'CANCEL' to add nothing```"
-		await self.ctx.send(text)
+		text += "Send 'CANCEL' to add nothing"
+		await self.msg.edit(self.msg.content + text)
 		def check(m):
 			return m.channel == self.ctx.channel
 		try:
@@ -252,18 +258,22 @@ class Inventory2View(discord.ui.View):
 		except asyncio.TimeoutError:
 			await self.ctx.send("Cancelling...")
 		else:
-			if msg.content != "CANCEL":
+			content = msg.content
+			await msg.delete()
+			if content != "CANCEL":
 				splitMSG = msg.content.split(", ")
 				if len(splitMSG) == 1:
 					add_item_to_db(self.con, self.party, splitMSG[0])
-					await self.ctx.send(splitMSG[0] + " added to the inventory")
+					self.contents = get_items_from_db(self.con, self.party)
+					await self.update()
+					await self.msg.edit(self.msg.content + splitMSG[0] + " added to the inventory")
 				else:
 					add_item_to_db(self.con, self.party, splitMSG[0], splitMSG[1])
-					await self.ctx.send(splitMSG[1] + " " + splitMSG[0] + " added to the inventory")
+					self.contents = get_items_from_db(self.con, self.party)
+					await self.update()
+					await self.msg.edit(self.msg.content + splitMSG[1] + " " + splitMSG[0] + " added to the inventory")
 			else:
-				await self.ctx.send("Cancelling...")
-			self.contents =get_items_from_db(self.con, self.party)
-			await self.update()
+				await self.msg.edit(self.msg.content + "Cancelling...")
 	#@discord.ui.button(label='Add Backpack', style=discord.ButtonStyle.green, row=3)
 	#async def add_backpack(self, button: discord.ui.Button, interaction: discord.Interaction):
 		#TODO
