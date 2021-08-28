@@ -77,7 +77,7 @@ def add_item_to_db(connection, party, item, value=None, backpack=None):
 
 def get_items_from_db(connection, party):
 	cursor = connection.cursor()
-	cursor.execute("SELECT item FROM inventories WHERE party=?", (party,))
+	cursor.execute("SELECT item FROM inventories WHERE party=? and item!=?", (party, "TITLE"))
 	return cursor.fetchall()
 
 def get_parties_from_db(connection):
