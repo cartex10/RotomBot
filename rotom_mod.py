@@ -123,7 +123,7 @@ class InventoryView(discord.ui.View):
 			return
 		self.selected += 1
 		await self.update()
-	@discord.ui.button(label='Select', style=discord.ButtonStyle.green)
+	@discord.ui.button(label='Select', style=discord.ButtonStyle.green, row=2)
 	async def select(self, button: discord.ui.Button, interaction: discord.Interaction):
 		contents = get_items_from_db(self.con, str(self.inventories[self.selected][0]))
 		first = True
@@ -139,9 +139,28 @@ class InventoryView(discord.ui.View):
 		view = Inventory2View(self.bot, self.ctx, msg, self.con, str(self.inventories[self.selected][0]))
 		await msg.edit(view=view)
 		self.stop()
-	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red)
+	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red, row=2)
 	async def exit(self, button: discord.ui.Button, interaction: discord.Interaction):
 		self.stop()
+	@discord.ui.button(label='Create New', style=discord.ButtonStyle.green, row=3)
+	async def create(self, button: discord.ui.Button, interaction: discord.Interaction):
+		text = "```Respond with the name of the new inventory\n"
+		text += "Send 'CANCEL' to create nothing```"
+		await self.ctx.send(text)
+		def check(m):
+			return m.channel == self.ctx.channel
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.ctx.send("Cancelling...")
+		else:
+			if msg.content != "CANCEL":
+				add_item_to_db(self.con, msg.content, "TITLE")
+				await self.ctx.send(msg.content + " created")
+			else:
+				await self.ctx.send("Cancelling...")
+			self.inventories = get_parties_from_db(self.con)
+			await self.update()
 
 class Inventory2View(discord.ui.View):
 	def __init__(self, bot, ctx, msg, con, party):
