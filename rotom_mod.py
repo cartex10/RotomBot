@@ -90,6 +90,11 @@ def remove_item_from_db(connection, party, item):
 	cursor.execute("DELETE FROM inventories WHERE party=? AND item=?", (party, item))
 	connection.commit()
 
+def delete_inventory(connection, party):
+	cursor = connection.cursor()
+	cursor.execute("DELETE FROM inventories WHERE party=?", (party,))
+	connection.commit()
+
 ##### VIEWS #####
 class InventoryView(discord.ui.View):
 	def __init__(self, bot, ctx, msg, con):
@@ -157,6 +162,27 @@ class InventoryView(discord.ui.View):
 			if msg.content != "CANCEL":
 				add_item_to_db(self.con, msg.content, "TITLE")
 				await self.ctx.send(msg.content + " created")
+			else:
+				await self.ctx.send("Cancelling...")
+			self.inventories = get_parties_from_db(self.con)
+			await self.update()
+	@discord.ui.button(label='Delete', style=discord.ButtonStyle.red, row=3)
+	async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
+		text = "```Are you sure you want to delete this inventory and all of its contents?\n"
+		text += "Send 'YES' to delete, or anything else to cancel```"
+		await self.ctx.send(text)
+		def check(m):
+			return m.channel == self.ctx.channel
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.ctx.send("Cancelling...")
+		else:
+			if msg.content == "YES":
+				delete_inventory(self.con, self.inventories[self.selected][0])
+				await self.ctx.send(self.inventories[self.selected][0] + " deleted")
+				if self.selected == len(self.inventories)-1:
+					self.selected -= 1
 			else:
 				await self.ctx.send("Cancelling...")
 			self.inventories = get_parties_from_db(self.con)
