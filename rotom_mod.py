@@ -72,7 +72,7 @@ def delete_role_from_db(connection, message_id):
 
 def add_item_to_db(connection, party, item, value=None, backpack=None):
 	cursor = connection.cursor()
-	cursor.execute("INSERT INTO inventories VALUES (?, ?, ?, ?)", (party, item, backpack, value))
+	cursor.execute("INSERT INTO inventories VALUES (?, ?, ?, ?)", (party, item, value, backpack))
 	connection.commit()
 
 def get_items_from_db(connection, party):
@@ -102,7 +102,7 @@ class InventoryView(discord.ui.View):
 		self.con = con
 		self.bot = bot
 		self.inventories = get_parties_from_db(self.con)
-	async def refresh(self):
+	async def update(self):
 		msg_str = "```SAVED INVENTORIES\n\n"
 		for i in self.inventories:
 			if self.selected == self.inventories.index(i):
@@ -111,19 +111,18 @@ class InventoryView(discord.ui.View):
 				msg_str += i[0] + "\n"
 		msg_str += "```"
 		await self.msg.edit(msg_str)
-		await self.ctx.send("asdf")
 	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected == 0:
 			return
 		self.selected -= 1
-		await self.refresh()
+		await self.update()
 	@discord.ui.button(label='Down', style=discord.ButtonStyle.secondary)
 	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected == len(self.inventories)-1:
 			return
 		self.selected += 1
-		await self.refresh()
+		await self.update()
 	@discord.ui.button(label='Select', style=discord.ButtonStyle.green)
 	async def select(self, button: discord.ui.Button, interaction: discord.Interaction):
 		contents = get_items_from_db(self.con, str(self.inventories[self.selected][0]))
@@ -156,7 +155,7 @@ class Inventory2View(discord.ui.View):
 		self.party = party
 		self.bot = bot
 		self.contents = get_items_from_db(self.con, self.party)
-	async def refresh(self):
+	async def update(self):
 		msg_str = "```INVENTORY CONTENTS\n\n"
 		for i in self.contents:
 			if self.selected == self.contents.index(i):
@@ -168,33 +167,32 @@ class Inventory2View(discord.ui.View):
 	#@discord.ui.button(label='Bank', style=discord.ButtonStyle.primary, row=0)
 	#async def bank(self, button: discord.ui.Button, interaction: discord.Interaction):
 		#TODO
-		self.stop()
 	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary, row=1)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected == 0:
 			return
 		self.selected -= 1
-		await self.refresh()
+		await self.update()
 	@discord.ui.button(label='Down', style=discord.ButtonStyle.secondary, row=1)
 	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected == len(self.contents)-1:
 			return
 		self.selected += 1
-		await self.refresh()
+		await self.update()
 	@discord.ui.button(label='Up 5', style=discord.ButtonStyle.secondary, row=2)
 	async def upfive(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected <= 4:
 			self.selected = 0
 		else:
 			self.selected -= 5
-		await self.refresh()
+		await self.update()
 	@discord.ui.button(label='Down 5', style=discord.ButtonStyle.secondary, row=2)
 	async def downfive(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected >= len(self.contents)-6:
 			self.selected = len(self.contents)-1
 		else:
 			self.selected += 5
-		await self.refresh()
+		await self.update()
 	@discord.ui.button(label='Add Item', style=discord.ButtonStyle.green, row=3)
 	async def add_item(self, button: discord.ui.Button, interaction: discord.Interaction):
 		channel = self.ctx.channel
@@ -220,7 +218,7 @@ class Inventory2View(discord.ui.View):
 			else:
 				await self.ctx.send("Cancelling...")
 			self.contents =get_items_from_db(self.con, self.party)
-			await self.refresh()
+			await self.update()
 	#@discord.ui.button(label='Add Backpack', style=discord.ButtonStyle.green, row=3)
 	#async def add_backpack(self, button: discord.ui.Button, interaction: discord.Interaction):
 		#TODO
@@ -232,7 +230,7 @@ class Inventory2View(discord.ui.View):
 		if self.selected == 0:
 			self.selected = 1
 		self.selected -= 1
-		refresh()
+		await self.update()
 
 ##### HELP TEXT #####
 def mem_join_text():
