@@ -107,6 +107,8 @@ class InventoryView(discord.ui.View):
 		self.con = con
 		self.bot = bot
 		self.inventories = get_parties_from_db(self.con)
+	async def on_timeout(self):
+		self.stop()
 	async def update(self):
 		msg_str = "```SAVED INVENTORIES\n\n"
 		for i in self.inventories:
@@ -157,7 +159,8 @@ class InventoryView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.ctx.send("Cancelling...")
+			await self.update()
+			await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
 		else:
 			content = msg.content
 			await msg.delete()
@@ -179,7 +182,8 @@ class InventoryView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.ctx.send("Cancelling...")
+			await self.update()
+			await self.msg.edit(self.msg.content + "You ran out of time to decide, try again")
 		else:
 			content = msg.content
 			await msg.delete()
@@ -207,6 +211,8 @@ class Inventory2View(discord.ui.View):
 		self.party = party
 		self.bot = bot
 		self.contents = get_items_from_db(self.con, self.party)
+	async def on_timeout(self):
+		self.stop()
 	async def update(self):
 		msg_str = "```INVENTORY CONTENTS\n\n"
 		for i in self.contents:
@@ -256,7 +262,8 @@ class Inventory2View(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.ctx.send("Cancelling...")
+			await self.update()
+			await self.msg.edit(self.msg.content + "You ran out of time to add the item, try again")
 		else:
 			content = msg.content
 			await msg.delete()
