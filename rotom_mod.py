@@ -108,6 +108,7 @@ class InventoryView(discord.ui.View):
 		self.bot = bot
 		self.inventories = get_parties_from_db(self.con)
 	async def on_timeout(self):
+		await self.msg.delete()
 		self.stop()
 	async def update(self):
 		msg_str = "```SAVED INVENTORIES\n\n"
@@ -148,6 +149,7 @@ class InventoryView(discord.ui.View):
 		self.stop()
 	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red, row=2)
 	async def exit(self, button: discord.ui.Button, interaction: discord.Interaction):
+		await self.msg.delete()
 		self.stop()
 	@discord.ui.button(label='Create New', style=discord.ButtonStyle.green, row=3)
 	async def create(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -212,6 +214,7 @@ class Inventory2View(discord.ui.View):
 		self.bot = bot
 		self.contents = get_items_from_db(self.con, self.party)
 	async def on_timeout(self):
+		await self.msg.delete()
 		self.stop()
 	async def update(self):
 		msg_str = "```INVENTORY CONTENTS\n\n"
@@ -281,10 +284,6 @@ class Inventory2View(discord.ui.View):
 					await self.msg.edit(self.msg.content + splitMSG[1] + " " + splitMSG[0] + " added to the inventory")
 			else:
 				await self.msg.edit(self.msg.content + "Cancelling...")
-	#@discord.ui.button(label='Add Backpack', style=discord.ButtonStyle.green, row=3)
-	#async def add_backpack(self, button: discord.ui.Button, interaction: discord.Interaction):
-		#TODO
-		#pass
 	@discord.ui.button(label='Remove', style=discord.ButtonStyle.red, row=3)
 	async def delete_item(self, button: discord.ui.Button, interaction: discord.Interaction):
 		remove_item_from_db(self.con, self.party, self.contents[self.selected][0])
@@ -293,6 +292,14 @@ class Inventory2View(discord.ui.View):
 			self.selected = 1
 		self.selected -= 1
 		await self.update()
+	#@discord.ui.button(label='Add Backpack', style=discord.ButtonStyle.green, row=3)
+	#async def add_backpack(self, button: discord.ui.Button, interaction: discord.Interaction):
+		#TODO MAYBE
+		#pass
+	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red, row=4)
+	async def exit(self, button: discord.ui.Button, interaction: discord.Interaction):
+		await self.msg.delete()
+		self.stop()
 
 ##### HELP TEXT #####
 def mem_join_text():
