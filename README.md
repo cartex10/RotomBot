@@ -18,6 +18,8 @@ COMMANDS:
 		Sends an explanation for each command
 	!init
 		An initiative tracker to be used in DnD games
+	!inventory
+		A tool to track a party's inventory and collective bank
 	!keepwatch
 		Helps keep track of who keeps which watch in a game of dnd
 	!repeat

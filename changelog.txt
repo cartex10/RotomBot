@@ -99,7 +99,6 @@ v2.3.2 release - 12/16/20
 	-!init view now prints DM info
 	-DM can now add secret creatures using !init add
 
-***CURRENT VERSION***
 v2.4 release - 6/11/21
 	-remove all !role commands in favor of...
 	-new functionality for #pick-roles channel, which replaces the !role commands
@@ -110,3 +109,10 @@ v2.4 release - 6/11/21
 	-new functionality for #server-suggestions channel
 		*With this functionality, any message in this channel with an Admin mention will be sent to the #admin-chat channel
 		*This is going to be used to help improve the server using member suggestions
+
+***CURRENT VERSION***
+v2.5 release - 9/20/2021
+	-new !inventory command
+		-this new command is the only thing added this update, but it's a big one!
+		-can be used to track multiple parties' inventories and collective banks
+		-uses the new buttons feature in order to simplify use
