@@ -129,6 +129,7 @@ class InventoryView(discord.ui.View):
 				msg_str += i[0] + "\n"
 		msg_str += "```"
 		await self.msg.edit(msg_str)
+		return msg_str
 	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected == 0:
@@ -179,8 +180,8 @@ class InventoryView(discord.ui.View):
 			if content != "CANCEL":
 				add_item_to_db(self.con, msg.content, "BANK", value="0,0,0")
 				self.inventories = get_parties_from_db(self.con)
-				await self.update()
-				await self.msg.edit(self.msg.content + msg.content + " created")
+				msg_str = await self.update()
+				await self.msg.edit(msg_str + msg.content + " created")
 			else:
 				await self.update()
 				await self.msg.edit(self.msg.content + "Cancelling...")
@@ -205,8 +206,8 @@ class InventoryView(discord.ui.View):
 				self.inventories = get_parties_from_db(self.con)
 				if self.selected == len(self.inventories):
 					self.selected -= 1
-				await self.update()
-				await self.msg.edit(self.msg.content + toDelete + " deleted")
+				msg_str = await self.update()
+				await self.msg.edit(msg_str + toDelete + " deleted")
 			else:
 				await self.update()
 				await self.msg.edit(self.msg.content + "Cancelling...")
@@ -235,6 +236,7 @@ class Inventory2View(discord.ui.View):
 				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
 		msg_str += "```"
 		await self.msg.edit(msg_str)
+		return msg_str
 	@discord.ui.button(label='Bank', style=discord.ButtonStyle.primary, row=0)
 	async def bank(self, button: discord.ui.Button, interaction: discord.Interaction):
 		vault = get_bank_from_db(self.con, self.party).split(",")
@@ -278,8 +280,7 @@ class Inventory2View(discord.ui.View):
 	@discord.ui.button(label='Add Item', style=discord.ButtonStyle.green, row=3)
 	async def add_item(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Respond with which item you would like to add\n"
-		text += "If it has a numerical value, add a space after with only the value\n"
-		# TODO: FIX WORDING HERE, NEED ", " NOT " "
+		text += "If it has a numerical value, add a comma and a space(', ') after with only the value\n"
 		text += "Send 'CANCEL' to add nothing"
 		await self.msg.edit(self.msg.content + text)
 		def check(m):
@@ -297,13 +298,13 @@ class Inventory2View(discord.ui.View):
 				if len(splitMSG) == 1:
 					add_item_to_db(self.con, self.party, splitMSG[0])
 					self.contents = get_items_from_db(self.con, self.party)
-					await self.update()
-					await self.msg.edit(self.msg.content + splitMSG[0] + " added to the inventory")
+					msg_str = await self.update()
+					await self.msg.edit(msg_str + splitMSG[0] + " added to the inventory")
 				else:
 					add_item_to_db(self.con, self.party, splitMSG[0], splitMSG[1])
 					self.contents = get_items_from_db(self.con, self.party)
-					await self.update()
-					await self.msg.edit(self.msg.content + splitMSG[1] + " " + splitMSG[0] + " added to the inventory")
+					msg_str = await self.update()
+					await self.msg.edit(msg_str + splitMSG[1] + " " + splitMSG[0] + " added to the inventory")
 			else:
 				await self.msg.edit(self.msg.content + "Cancelling...")
 	@discord.ui.button(label='Remove', style=discord.ButtonStyle.red, row=3)

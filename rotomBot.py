@@ -380,7 +380,7 @@ class dnd(commands.Cog, name="DND related"):
 					msg_str += str(contents.index(i) + 1) + ". " + i[0] + "\n"
 			msg_str += "```"
 			msg = await ctx.send(msg_str)
-			view = Inventory2View(self, ctx, msg, con, party)
+			view = Inventory2View(bot, ctx, msg, con, party)
 			await msg.edit(view=view)
 
 class server(commands.Cog, name="Server/Bot Related"):
