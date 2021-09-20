@@ -407,6 +407,124 @@ class BankView(discord.ui.View):
 					set_bank_from_db(self.con, self.party, temp)
 					msg_str = await self.update()
 					await self.msg.edit(msg_str + content + " Copper in the bank")
+	@discord.ui.button(label='Add Silver', style=discord.ButtonStyle.secondary, row=1)
+	async def addS(self, button: discord.ui.Button, interaction: discord.Interaction):
+		text = "Enter what you would like to add to the Silver storage"
+		await self.msg.edit(self.msg.content + text)
+		def check(m):
+			return m.channel == self.ctx.channel
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.update()
+			await self.msg.edit(self.msg.content + "You ran out of time to add the currency, try again")
+		else:
+			content = msg.content
+			await msg.delete()
+			if content == "CANCEL":
+				await self.msg.edit(self.msg.content + "Cancelling...")
+			else:
+				if not content.isnumeric():
+					await self.update()
+					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
+				else:
+					temp = int(self.vault[1]) + int(content)
+					self.vault[1] = str(temp)
+					temp_vault = ""
+					for i in self.vault:
+						temp_vault += i + ","
+					temp = temp_vault.rstrip(',')
+					set_bank_from_db(self.con, self.party, temp)
+					msg_str = await self.update()
+					await self.msg.edit(msg_str + content + " Silver added to the bank")
+	@discord.ui.button(label='Set Silver', style=discord.ButtonStyle.secondary, row=2)
+	async def setS(self, button: discord.ui.Button, interaction: discord.Interaction):
+		text = "Enter what you would like to set the new value of the Silver storage to"
+		await self.msg.edit(self.msg.content + text)
+		def check(m):
+			return m.channel == self.ctx.channel
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.update()
+			await self.msg.edit(self.msg.content + "You ran out of time to set the currency, try again")
+		else:
+			content = msg.content
+			await msg.delete()
+			if content == "CANCEL":
+				await self.msg.edit(self.msg.content + "Cancelling...")
+			else:
+				if not content.isnumeric():
+					await self.update()
+					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
+				else:
+					self.vault[1] = content
+					temp_vault = ""
+					for i in self.vault:
+						temp_vault += i + ","
+					temp = temp_vault.rstrip(',')
+					set_bank_from_db(self.con, self.party, temp)
+					msg_str = await self.update()
+					await self.msg.edit(msg_str + content + " Silver in the bank")
+	@discord.ui.button(label='Add Gold', style=discord.ButtonStyle.secondary, row=1)
+	async def addG(self, button: discord.ui.Button, interaction: discord.Interaction):
+		text = "Enter what you would like to add to the Gold storage"
+		await self.msg.edit(self.msg.content + text)
+		def check(m):
+			return m.channel == self.ctx.channel
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.update()
+			await self.msg.edit(self.msg.content + "You ran out of time to add the currency, try again")
+		else:
+			content = msg.content
+			await msg.delete()
+			if content == "CANCEL":
+				await self.msg.edit(self.msg.content + "Cancelling...")
+			else:
+				if not content.isnumeric():
+					await self.update()
+					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
+				else:
+					temp = int(self.vault[2]) + int(content)
+					self.vault[2] = str(temp)
+					temp_vault = ""
+					for i in self.vault:
+						temp_vault += i + ","
+					temp = temp_vault.rstrip(',')
+					set_bank_from_db(self.con, self.party, temp)
+					msg_str = await self.update()
+					await self.msg.edit(msg_str + content + " Gold added to the bank")
+	@discord.ui.button(label='Set Gold', style=discord.ButtonStyle.secondary, row=2)
+	async def setG(self, button: discord.ui.Button, interaction: discord.Interaction):
+		text = "Enter what you would like to set the new value of the Gold storage to"
+		await self.msg.edit(self.msg.content + text)
+		def check(m):
+			return m.channel == self.ctx.channel
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.update()
+			await self.msg.edit(self.msg.content + "You ran out of time to set the currency, try again")
+		else:
+			content = msg.content
+			await msg.delete()
+			if content == "CANCEL":
+				await self.msg.edit(self.msg.content + "Cancelling...")
+			else:
+				if not content.isnumeric():
+					await self.update()
+					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
+				else:
+					self.vault[2] = content
+					temp_vault = ""
+					for i in self.vault:
+						temp_vault += i + ","
+					temp = temp_vault.rstrip(',')
+					set_bank_from_db(self.con, self.party, temp)
+					msg_str = await self.update()
+					await self.msg.edit(msg_str + content + " Gold in the bank")
 
 ##### HELP TEXT #####
 def mem_join_text():
