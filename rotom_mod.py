@@ -168,7 +168,7 @@ class InventoryView(discord.ui.View):
 		text += "Send 'CANCEL' to create nothing"
 		await self.msg.edit(self.msg.content + text)
 		def check(m):
-			return m.channel == self.ctx.channel
+			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -191,7 +191,7 @@ class InventoryView(discord.ui.View):
 		text += "Send 'YES' to delete, or anything else to cancel"
 		await self.msg.edit(self.msg.content + text)
 		def check(m):
-			return m.channel == self.ctx.channel
+			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -284,7 +284,7 @@ class Inventory2View(discord.ui.View):
 		text += "Send 'CANCEL' to add nothing"
 		await self.msg.edit(self.msg.content + text)
 		def check(m):
-			return m.channel == self.ctx.channel
+			return m.channel == self.ctx.channel and m.author == self.ctx.author and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -354,7 +354,7 @@ class BankView(discord.ui.View):
 		text = "Enter what you would like to add to the Copper storage"
 		await self.msg.edit(self.msg.content + text)
 		def check(m):
-			return m.channel == self.ctx.channel
+			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -384,7 +384,7 @@ class BankView(discord.ui.View):
 		text = "Enter what you would like to set the new value of the Copper storage to"
 		await self.msg.edit(self.msg.content + text)
 		def check(m):
-			return m.channel == self.ctx.channel
+			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -413,7 +413,7 @@ class BankView(discord.ui.View):
 		text = "Enter what you would like to add to the Silver storage"
 		await self.msg.edit(self.msg.content + text)
 		def check(m):
-			return m.channel == self.ctx.channel
+			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -443,7 +443,7 @@ class BankView(discord.ui.View):
 		text = "Enter what you would like to set the new value of the Silver storage to"
 		await self.msg.edit(self.msg.content + text)
 		def check(m):
-			return m.channel == self.ctx.channel
+			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -472,7 +472,7 @@ class BankView(discord.ui.View):
 		text = "Enter what you would like to add to the Gold storage"
 		await self.msg.edit(self.msg.content + text)
 		def check(m):
-			return m.channel == self.ctx.channel
+			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -502,7 +502,7 @@ class BankView(discord.ui.View):
 		text = "Enter what you would like to set the new value of the Gold storage to"
 		await self.msg.edit(self.msg.content + text)
 		def check(m):
-			return m.channel == self.ctx.channel
+			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
