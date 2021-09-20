@@ -102,8 +102,8 @@ def get_bank_from_db(connection, party):
 
 def set_bank_from_db(connection, party, vault):
 	cursor = connection.cursor()
-	# TODO
-	return cursor.fetchall()
+	cursor.execute("UPDATE inventories SET value=? WHERE party=? AND item=?", (vault, party, "BANK"))
+	connection.commit()
 
 ##### VIEWS #####
 class InventoryView(discord.ui.View):
@@ -246,8 +246,9 @@ class Inventory2View(discord.ui.View):
 			count += 1
 		msg_str += "```"
 		msg = await self.ctx.send(msg_str)
-		view = BankView(self.bot, self.ctx, self.msg, self.con, self.party)
+		view = BankView(self.bot, self.ctx, msg, self.con, self.party)
 		await msg.edit(view=view)
+		await self.msg.delete()
 	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary, row=1)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected == 0:
@@ -340,10 +341,13 @@ class BankView(discord.ui.View):
 	async def update(self):
 		msg_str = "```Bank Contents\n\n"
 		temp = [" c", " s", " g"]
+		count = 0
 		for i in self.vault:
-			msg_str += i + temp[i]
+			msg_str += i + temp[count] + "\n"
+			count += 1
 		msg_str += "```"
 		await self.msg.edit(msg_str)
+		return msg_str
 	@discord.ui.button(label='Add Copper', style=discord.ButtonStyle.secondary, row=1)
 	async def addC(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Enter what you would like to add to the Copper storage"
@@ -362,9 +366,18 @@ class BankView(discord.ui.View):
 				await self.msg.edit(self.msg.content + "Cancelling...")
 			else:
 				if not content.isnumeric():
+					await self.update()
 					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
 				else:
-					self.vault[0] += int(content)
+					temp = int(self.vault[0]) + int(content)
+					self.vault[0] = str(temp)
+					temp_vault = ""
+					for i in self.vault:
+						temp_vault += i + ","
+					temp = temp_vault.rstrip(',')
+					set_bank_from_db(self.con, self.party, temp)
+					msg_str = await self.update()
+					await self.msg.edit(msg_str + content + " Copper added to the bank")
 
 
 ##### HELP TEXT #####
