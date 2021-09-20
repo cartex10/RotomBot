@@ -525,6 +525,27 @@ class BankView(discord.ui.View):
 					set_bank_from_db(self.con, self.party, temp)
 					msg_str = await self.update()
 					await self.msg.edit(msg_str + content + " Gold in the bank")
+	@discord.ui.button(label='Back', style=discord.ButtonStyle.primary, row=3)
+	async def back(self, button: discord.ui.Button, interaction: discord.Interaction):
+		contents = get_items_from_db(self.con, str(self.party))
+		first = True
+		msg_str = "```INVENTORY CONTENTS\n\n"
+		for i in contents:
+			if first:
+				msg_str += str(contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
+				first = False
+			else:
+				msg_str += str(contents.index(i) + 1) + ". " + i[0] + "\n"
+		msg_str += "```"
+		msg = await self.ctx.send(msg_str)
+		view = Inventory2View(self.bot, self.ctx, msg, self.con, str(self.party))
+		await msg.edit(view=view)
+		await self.msg.delete()
+		self.stop()
+	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red, row=3)
+	async def exit(self, button: discord.ui.Button, interaction: discord.Interaction):
+		await self.msg.delete()
+		self.stop()
 
 ##### HELP TEXT #####
 def mem_join_text():
