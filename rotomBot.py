@@ -350,7 +350,7 @@ class dnd(commands.Cog, name="DND related"):
 		for i in nums:
 			await msg.add_reaction(i)
 
-	@commands.command(help="Check a party's inventory or bank")
+	@commands.command(help="Check a party's inventory or bank\nInclude the name of the party to skip the selection menu")
 	async def inventory(self, ctx, party=None):
 		if(party == None):
 			inventories = get_parties_from_db(con)
@@ -368,6 +368,20 @@ class dnd(commands.Cog, name="DND related"):
 			await msg.edit(view=view)
 			await view.wait()
 			await msg.delete()
+		else:
+			contents = get_items_from_db(con, party)
+			first = True
+			msg_str = "```INVENTORY CONTENTS\n\n"
+			for i in contents:
+				if first:
+					msg_str += str(contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
+					first = False
+				else:
+					msg_str += str(contents.index(i) + 1) + ". " + i[0] + "\n"
+			msg_str += "```"
+			msg = await ctx.send(msg_str)
+			view = Inventory2View(self, ctx, msg, con, party)
+			await msg.edit(view=view)
 
 class server(commands.Cog, name="Server/Bot Related"):
 	def _init_(self, bot):
