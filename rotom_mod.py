@@ -325,7 +325,7 @@ class Inventory2View(discord.ui.View):
 			self.selected = 1
 		self.selected -= 1
 		await self.update()
-	@discord.ui.button(label='Change Value', style=discord.ButtonStyle.green, row=3)
+	@discord.ui.button(label='Change Value', style=discord.ButtonStyle.green, row=4)
 	async def edit_value(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Enter what you would like to set the new value of the item to\n"
 		text += "Enter 'NONE' if you would like the item to have no value\n"
@@ -344,16 +344,21 @@ class Inventory2View(discord.ui.View):
 			if content == "CANCEL":
 				await self.msg.edit(self.msg.content + "Cancelling...")
 			elif content == "NONE":
-				#TO DO
-				pass
+				item_name = self.contents[self.selected][0]
+				set_value_from_db(self.con, self.party, item_name, None)
+				self.contents = get_items_from_db(self.con, self.party)
+				msg_str = await self.update()
+				await self.msg.edit(msg_str + item_name + "'s value removed")
 			else:
 				if not content.isnumeric():
 					await self.update()
 					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
 				else:
-					#TO DO
+					item_name = self.contents[self.selected][0]
+					set_value_from_db(self.con, self.party, item_name, content)
+					self.contents = get_items_from_db(self.con, self.party)
 					msg_str = await self.update()
-					await self.msg.edit(msg_str + content + item_name + "'s value set to " + value)
+					await self.msg.edit(msg_str + item_name + "'s value set to " + content)
 	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red, row=4)
 	async def exit(self, button: discord.ui.Button, interaction: discord.Interaction):
 		await self.msg.delete()
