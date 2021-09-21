@@ -325,10 +325,35 @@ class Inventory2View(discord.ui.View):
 			self.selected = 1
 		self.selected -= 1
 		await self.update()
-	#@discord.ui.button(label='Add Backpack', style=discord.ButtonStyle.green, row=3)
-	#async def add_backpack(self, button: discord.ui.Button, interaction: discord.Interaction):
-		#TODO MAYBE
-		#pass
+	@discord.ui.button(label='Change Value', style=discord.ButtonStyle.green, row=3)
+	async def edit_value(self, button: discord.ui.Button, interaction: discord.Interaction):
+		text = "Enter what you would like to set the new value of the item to\n"
+		text += "Enter 'NONE' if you would like the item to have no value\n"
+		text += "Enter 'CANCEL' if you would like to cancel any input"
+		await self.msg.edit(self.msg.content + text)
+		def check(m):
+			return m.channel == self.ctx.channel and m.author == self.ctx.author
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.update()
+			await self.msg.edit(self.msg.content + "You ran out of time to set the currency, try again")
+		else:
+			content = msg.content
+			await msg.delete()
+			if content == "CANCEL":
+				await self.msg.edit(self.msg.content + "Cancelling...")
+			else if content == "NONE":
+				#TO DO
+				pass
+			else:
+				if not content.isnumeric():
+					await self.update()
+					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
+				else:
+					#TO DO
+					msg_str = await self.update()
+					await self.msg.edit(msg_str + content + item_name + "'s value set to " + value)
 	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red, row=4)
 	async def exit(self, button: discord.ui.Button, interaction: discord.Interaction):
 		await self.msg.delete()
