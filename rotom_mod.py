@@ -100,9 +100,9 @@ def get_bank_from_db(connection, party):
 	cursor.execute("SELECT value FROM inventories WHERE party=? AND item=?", (party, "BANK"))
 	return cursor.fetchall()[0][0]
 
-def set_bank_from_db(connection, party, vault):
+def set_value_from_db(connection, party, item, value):
 	cursor = connection.cursor()
-	cursor.execute("UPDATE inventories SET value=? WHERE party=? AND item=?", (vault, party, "BANK"))
+	cursor.execute("UPDATE inventories SET value=? WHERE party=? AND item=?", (value, party, item))
 	connection.commit()
 
 ##### VIEWS #####
@@ -343,7 +343,7 @@ class Inventory2View(discord.ui.View):
 			await msg.delete()
 			if content == "CANCEL":
 				await self.msg.edit(self.msg.content + "Cancelling...")
-			else if content == "NONE":
+			elif content == "NONE":
 				#TO DO
 				pass
 			else:
@@ -411,7 +411,7 @@ class BankView(discord.ui.View):
 					for i in self.vault:
 						temp_vault += i + ","
 					temp = temp_vault.rstrip(',')
-					set_bank_from_db(self.con, self.party, temp)
+					set_value_from_db(self.con, self.party, "BANK", temp)
 					msg_str = await self.update()
 					await self.msg.edit(msg_str + content + " Copper added to the bank")
 	@discord.ui.button(label='Set Copper', style=discord.ButtonStyle.secondary, row=2)
@@ -440,7 +440,7 @@ class BankView(discord.ui.View):
 					for i in self.vault:
 						temp_vault += i + ","
 					temp = temp_vault.rstrip(',')
-					set_bank_from_db(self.con, self.party, temp)
+					set_value_from_db(self.con, self.party, "BANK", temp)
 					msg_str = await self.update()
 					await self.msg.edit(msg_str + content + " Copper in the bank")
 	@discord.ui.button(label='Add Silver', style=discord.ButtonStyle.secondary, row=1)
@@ -470,7 +470,7 @@ class BankView(discord.ui.View):
 					for i in self.vault:
 						temp_vault += i + ","
 					temp = temp_vault.rstrip(',')
-					set_bank_from_db(self.con, self.party, temp)
+					set_value_from_db(self.con, self.party, "BANK", temp)
 					msg_str = await self.update()
 					await self.msg.edit(msg_str + content + " Silver added to the bank")
 	@discord.ui.button(label='Set Silver', style=discord.ButtonStyle.secondary, row=2)
@@ -499,7 +499,7 @@ class BankView(discord.ui.View):
 					for i in self.vault:
 						temp_vault += i + ","
 					temp = temp_vault.rstrip(',')
-					set_bank_from_db(self.con, self.party, temp)
+					set_value_from_db(self.con, self.party, "BANK", temp)
 					msg_str = await self.update()
 					await self.msg.edit(msg_str + content + " Silver in the bank")
 	@discord.ui.button(label='Add Gold', style=discord.ButtonStyle.secondary, row=1)
@@ -529,7 +529,7 @@ class BankView(discord.ui.View):
 					for i in self.vault:
 						temp_vault += i + ","
 					temp = temp_vault.rstrip(',')
-					set_bank_from_db(self.con, self.party, temp)
+					set_value_from_db(self.con, self.party, "BANK", temp)
 					msg_str = await self.update()
 					await self.msg.edit(msg_str + content + " Gold added to the bank")
 	@discord.ui.button(label='Set Gold', style=discord.ButtonStyle.secondary, row=2)
@@ -558,7 +558,7 @@ class BankView(discord.ui.View):
 					for i in self.vault:
 						temp_vault += i + ","
 					temp = temp_vault.rstrip(',')
-					set_bank_from_db(self.con, self.party, temp)
+					set_value_from_db(self.con, self.party, "BANK", temp)
 					msg_str = await self.update()
 					await self.msg.edit(msg_str + content + " Gold in the bank")
 	@discord.ui.button(label='Back', style=discord.ButtonStyle.primary, row=3)
