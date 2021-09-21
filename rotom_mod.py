@@ -77,7 +77,7 @@ def add_item_to_db(connection, party, item, value=None, backpack=None):
 
 def get_items_from_db(connection, party):
 	cursor = connection.cursor()
-	cursor.execute("SELECT item FROM inventories WHERE party=? AND item!=?", (party, "BANK"))
+	cursor.execute("SELECT item, value FROM inventories WHERE party=? AND item!=?", (party, "BANK"))
 	return cursor.fetchall()
 
 def get_parties_from_db(connection):
@@ -146,13 +146,18 @@ class InventoryView(discord.ui.View):
 	async def select(self, button: discord.ui.Button, interaction: discord.Interaction):
 		contents = get_items_from_db(self.con, str(self.inventories[self.selected][0]))
 		first = True
+		count = 1
 		msg_str = "```INVENTORY CONTENTS\n\n"
 		for i in contents:
 			if first:
-				msg_str += str(contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
+				msg_str += str(count) + ". " + ">> " + i[0] + " <<"
 				first = False
 			else:
-				msg_str += str(contents.index(i) + 1) + ". " + i[0] + "\n"
+				msg_str += str(count) + ". " + i[0]
+			if i[1] != None:
+				msg_str += " - " + i[1]
+			msg_str += "\n"
+			count += 1
 		msg_str += "```"
 		msg = await self.ctx.send(msg_str)
 		view = Inventory2View(self.bot, self.ctx, msg, self.con, str(self.inventories[self.selected][0]))
@@ -229,11 +234,16 @@ class Inventory2View(discord.ui.View):
 		self.stop()
 	async def update(self):
 		msg_str = "```INVENTORY CONTENTS\n\n"
+		count = 1
 		for i in self.contents:
 			if self.selected == self.contents.index(i):
-				msg_str += str(self.contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
+				msg_str += str(count) + ". " + ">> " + i[0] + " <<"
 			else:
-				msg_str += str(self.contents.index(i) + 1) + ". " + i[0] + "\n"
+				msg_str += str(count) + ". " + i[0]
+			if i[1] != None:
+				msg_str += " - " + i[1]
+			msg_str += "\n"
+			count += 1
 		msg_str += "```"
 		await self.msg.edit(msg_str)
 		return msg_str

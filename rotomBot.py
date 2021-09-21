@@ -372,12 +372,17 @@ class dnd(commands.Cog, name="DND related"):
 			contents = get_items_from_db(con, party)
 			first = True
 			msg_str = "```INVENTORY CONTENTS\n\n"
+			count = 1
 			for i in contents:
 				if first:
-					msg_str += str(contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
+					msg_str += str(count) + ". " + ">> " + i[0] + " <<"
 					first = False
 				else:
-					msg_str += str(contents.index(i) + 1) + ". " + i[0] + "\n"
+					msg_str += str(count) + ". " + i[0]
+				if i[1] != None:
+					msg_str += " - " + i[1]
+				msg_str += "\n"
+				count += 1
 			msg_str += "```"
 			msg = await ctx.send(msg_str)
 			view = Inventory2View(bot, ctx, msg, con, party)
