@@ -1,5 +1,4 @@
 # TO DO: fix calling init functions but dm is not defined
-#		 fix buttons looking broken
 #		 error handling on !inventory party for invalid names, return similar parties in db?
 #
 import discord
@@ -17,8 +16,8 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')				#Bot token
 guild_id = int(os.getenv('GUILD')) 		#Guild ID
 
-#on_text = "```ACTIVATING ROTOM BOT\nVERSION 3.0 SUCCESSFULLY LOADED```"
-on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
+on_text = "```ACTIVATING ROTOM BOT\nVERSION 3.0 SUCCESSFULLY LOADED```"
+#on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
 base_activity = discord.Activity(type=discord.ActivityType.listening, name="your commands!")
 intents = discord.Intents.all()
@@ -30,6 +29,8 @@ global curr_player
 global dm
 global guild
 global con
+global sickMsg
+global sickArray
 on_check = False
 #
 #	Events and Listeners
@@ -406,6 +407,12 @@ async def sync(ctx):
 	await bot.tree.sync()
 	await ctx.send(content="Commands Synced")
 
+# SICK Command
+@bot.hybrid_command(hidden=True)
+async def sick(ctx, sicknum: int):
+	msg = await ctx.send(content = "Click the button below to put your vote in to start SICK!")
+	view = SickView(bot, ctx, msg, sicknum)
+	await msg.edit(view=view)
 #
 #	Misc Commands
 #
