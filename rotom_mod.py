@@ -552,6 +552,44 @@ class BankView(discord.ui.View):
 		await self.msg.delete()
 		self.stop()
 
+class SickView(discord.ui.View):
+	def __init__(self, bot, ctx, msg, maxim):
+		super().__init__()
+		self.timeout = 0
+		self.bot = bot
+		self.ctx = ctx
+		self.msg = msg
+		self.arr = []
+		self.num = 0
+		self.maxim = maxim
+	@discord.ui.button(label="SICK", style=discord.ButtonStyle.green)
+	async def butt(self, interaction:discord.Interaction, button:discord.ui.Button):
+		inFlag = False
+		for i in self.arr:
+			if i == interaction.user:
+				inFlag = True
+		if not inFlag:
+			self.num += 1
+			if self.num == self.maxim:
+				# If maximum amount of people have "voted"
+				self.butt.style = discord.ButtonStyle.red
+				self.butt.label = "IT'S TIME"
+				text = "@everyone Calling all server members! It is time to decide on the future appearance of the server, you have one week!"
+				await interaction.response.send_message(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
+				self.stop()
+			else:
+				self.arr.append(interaction.user)
+				text = "Thank you for participating ❤️️ \n"
+				text += str(self.maxim - self.num)
+				text += " people need to press the button to trigger SICK"
+				await interaction.user.send(text)
+				await interaction.response.edit_message(view=self)
+		else:
+			text = "You have already pressed the button!\n"
+			await interaction.user.send(text)
+			await interaction.response.edit_message(view=self)
+
+
 ##### HELP TEXT #####
 def mem_join_text():
 	msg = "Hello! Welcome to our lovely server! We hope you enjoy your time here. :smile: \n"
