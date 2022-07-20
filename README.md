@@ -26,6 +26,8 @@ COMMANDS:
 		Repeats the message sent with the command call
 	!roll
 		Rolls any specified die with any modifier
+	!sick
+		Sends message with button that activates upon being pressed by a selectable amount of people
 EXTRA FEATURES:
 
 	Sends introductory message to new members
