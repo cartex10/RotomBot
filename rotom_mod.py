@@ -128,7 +128,7 @@ class InventoryView(discord.ui.View):
 			else:
 				msg_str += i[0] + "\n"
 		msg_str += "```"
-		await self.msg.edit(msg_str)
+		await self.msg.edit(content=msg_str)
 		return msg_str
 	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -245,7 +245,7 @@ class Inventory2View(discord.ui.View):
 			msg_str += "\n"
 			count += 1
 		msg_str += "```"
-		await self.msg.edit(msg_str)
+		await self.msg.edit(content=msg_str)
 		return msg_str
 	@discord.ui.button(label='Bank', style=discord.ButtonStyle.primary, row=0)
 	async def bank(self, button: discord.ui.Button, interaction: discord.Interaction):

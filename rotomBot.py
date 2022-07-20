@@ -1,3 +1,7 @@
+# TO DO: fix calling init functions but dm is not defined
+#		 fix buttons looking broken
+#		 error handling on !inventory party for invalid names, return similar parties in db?
+#
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -10,38 +14,38 @@ import time
 
 print("Starting bot with discord.py v" + discord.__version__)
 load_dotenv()
-#TOKEN = os.getenv('DISCORD_TOKEN')			#Actual bot token
-#TOKEN = os.getenv('TEST_TOKEN')			#Test bot token
-#guild_id = int(os.getenv('GUILD_ID')) 		#Actual server
-#guild_id = int(os.getenv('TEST_ID')) 		#Test server
+TOKEN = os.getenv('TOKEN')				#Bot token
+guild_id = int(os.getenv('GUILD')) 		#Guild ID
 
-#on_text = "```ACTIVATING ROTOM BOT\nVERSION 2.4.1 SUCCESSFULLY LOADED```"
+#on_text = "```ACTIVATING ROTOM BOT\nVERSION 3.0 SUCCESSFULLY LOADED```"
 on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
-base_activity = discord.Activity(type=discord.ActivityType.listening, name="!help")
-intents = discord.Intents.default()
-intents.members = True
-bot = commands.Bot(command_prefix="!", status="online", activity=base_activity, intents=intents)
+base_activity = discord.Activity(type=discord.ActivityType.listening, name="your commands!")
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix="@", status="online", activity=base_activity, intents=intents)
 
+global on_check
 global init_list
 global curr_player
 global dm
-global on_check
 global guild
 global con
 on_check = False
-
+#
+#	Events and Listeners
+#
 @bot.event									#called at bot startup
-async def on_ready():						
+async def on_ready():
 	global on_check
 	global guild
 	global con
 	guild = bot.get_guild(guild_id)
 	chan = discord.utils.get(guild.text_channels, name="general")
 	await bot.change_presence(activity=base_activity, status="online")
-	if on_check == False:
+	if not on_check:
 		on_check = True
 		con = create_connection("rotom_database.db")
+		await bot.tree.sync()
 		await chan.send(on_text)
 
 @bot.event									#sends introductory dm to new members
@@ -87,7 +91,7 @@ async def register_reaction(message):
 			toPrint += ": " + message.content + "\n " + message.jump_url
 			await chan.send(toPrint)
 
-@bot.listen('on_raw_message_delete')			#checks for deleted messages
+@bot.listen('on_raw_message_delete')		#checks for deleted messages
 async def remove_reactions(payload):
 	# #pick-roles channel functionality
 	chan = discord.utils.get(guild.text_channels, name="pick-roles")
@@ -142,295 +146,272 @@ async def reaction_unlistener(payload):
 			await sender.remove_roles(remRole)
 			await sender.send("You no longer have the '" + remRole.name + "' role! :frowning:")
 
+#
+#	DND Commands
+#
+# Roll Command
+@bot.hybrid_command(help=roll_help_text(), brief="Roll any amount of die with an optional modifier")
+async def roll(ctx, quantity=None, size=None, modifier=None):
+	content = "Rolling "
+	if quantity != None:
+		content += quantity
+		quantity = int(quantity)
+	else:
+		quantity = 1
+	content += "d"
+	if size != None:
+		content += size
+		size = int(size)
+	else:
+		content += "20"
+		size = 20
+	if modifier == None:
+		modifier = 0
+	elif modifier.startswith("-"):
+		content += " - " + modifier[1:]
+		modifier = int(modifier[1:]) * -1
+	else:
+		content += " + " + modifier
+		modifier = int(modifier)
+	content += "\n" + ctx.message.author.display_name + " - "
+	roll = 0
+	for i in range(0, quantity):
+		roll += random.randint(1, size)
+	content += str(roll + modifier)
+	await ctx.send(content=content)
 
-class dnd(commands.Cog, name="DND related"):
-	def _init_(self, bot):
-		self.bot = bot
+# Destroyed Dimension Counter Command
+@bot.hybrid_group(help="Destroyed dimension counter (for fellowship members only)", usage="[add, sub]")
+async def ddc(ctx):
+	if ctx.invoked_subcommand is None:
+		await ctx.send("Need further instruction. Use `!help ddc` for further help.")
+@ddc.command(help="View the current destroyed dimension counter")	
+async def view(ctx):
+	global con
+	intcount = ddc_return(con)
+	memRoleList = ctx.message.author.roles
+	hasRole = False
+	for i in memRoleList:
+		if i.name == "fellowship":
+			hasRole = True
+	if hasRole == True:
+		text = "Many dimensions have been lost...\nSo far, " + str(intcount) + " to be exact."
+		await ctx.send(text)
+	else:
+		await ctx.send("Sorry, only a fellowship member can use this function")
+@ddc.command(help="Add to the destroyed dimension counter")
+async def add(ctx):
+	global con
+	memRoleList = ctx.message.author.roles
+	hasRole = 0
+	for i in memRoleList:
+		if i.name == "fellowship":
+			hasRole = 1	
+	if hasRole == 1:
+		intcount = ddc_increment(con)
+		text = "Another dimension lost...\nThat makes " + str(intcount) + " dimensions lost to darkness."
+		await ctx.send(text)
+	else:
+		await ctx.send("Sorry, only a fellowship member can use this function")
+@ddc.command(help="Subtract from the destroyed dimension counter")
+async def sub(ctx):
+	global con
+	memRoleList = ctx.message.author.roles
+	hasRole = 0
+	for i in memRoleList:
+		if i.name == "fellowship":
+			hasRole = 1	
+	if hasRole == 1:
+		intcount = ddc_decrement(con)
+		text = "A dimension rises from the ashes of another...\nNow, " + str(intcount) + " dimensions survive."
+		await ctx.send(text)
+	else:
+		await ctx.send("Sorry, only a fellowship member can use this function")
 
-	@commands.command(help=roll_help_text(), brief="Roll a die with or without a modifier", usage="d[die size] +/- [modifier]")
-	async def roll(self, ctx, *, inp=None):
-		test = "Rolling "
-		if inp == None:
-			test += "d20"
-			roll = random.randint(1, 20)
-		else:
-			if "+" in inp:
-				temp = inp.split('+')
-				die = temp[0].strip()
-				mod = int(temp[1].strip())
-				hold = " + " + str(mod)
-			elif "-" in inp:
-				temp = inp.split('-')
-				die = temp[0].strip()
-				mod = int(temp[1].strip()) * -1
-				hold = " - " + str(mod * -1)
-			else:
-				die = inp.strip()
-				mod = 0
-				hold = ""
-			if die.startswith('d') or die.startswith('D'):
-				die = die[1:]
-			test += "d" + die + hold
-			die = int(die)
-			roll = random.randint(1, die) + mod
-		await ctx.send(test + "\n" + ctx.message.author.display_name + " - " + str(roll))
-
-	@commands.group(help="Destroyed dimension counter (for fellowship members only)", usage="[add, sub]")
-	async def ddc(self, ctx):
-		if ctx.invoked_subcommand is None:
-			await ctx.send("Need further instruction. Use `!help ddc` for further help.")			
-	@ddc.command(help="View the current destroyed dimension counter")
-	async def view(ctx):
-		global con
-		intcount = ddc_return(con)
-		memRoleList = ctx.message.author.roles
-		hasRole = 0
-		for i in memRoleList:
-			if i.name == "fellowship":
-				hasRole = 1
-
-		if hasRole == 1:
-			text = "Many dimensions have been lost...\nSo far, " + str(intcount) + " to be exact."
-			await ctx.send(text)
-		else:
-			await ctx.send("Sorry, only a fellowship member can use this function")
-	@ddc.command(help="Add to the destroyed dimension counter")
-	async def add(ctx):
-		global con
-		memRoleList = ctx.message.author.roles
-		hasRole = 0
-		for i in memRoleList:
-			if i.name == "fellowship":
-				hasRole = 1	
-		if hasRole == 1:
-			intcount = ddc_increment(con)
-			text = "Another dimension lost...\nThat makes " + str(intcount) + " dimensions lost to darkness."
-			await ctx.send(text)
-		else:
-			await ctx.send("Sorry, only a fellowship member can use this function")
-	@ddc.command(help="Subtract from the destroyed dimension counter")
-	async def sub(self, ctx):
-		global con
-		memRoleList = ctx.message.author.roles
-		hasRole = 0
-		for i in memRoleList:
-			if i.name == "fellowship":
-				hasRole = 1	
-		if hasRole == 1:
-			intcount = ddc_decrement(con)
-			text = "A dimension rises from the ashes of another...\nNow, " + str(intcount) + " dimensions survive."
-			await ctx.send(text)
-		else:
-			await ctx.send("Sorry, only a fellowship member can use this function")
-
-	@commands.group(help=init_help_text(), brief="Initiative tracker", usage="[start, add, remove, view, next]")
-	async def init(self, ctx):
-		if ctx.invoked_subcommand is None:
-			await ctx.send("Need further instruction. Use `!help init` for further help.")
-	@init.command(help=init_start_help_text(), brief="Initiates a new initiative")
-	async def start(self, ctx):
-		global init_list
-		global curr_player
-		global dm
-		init_list = []
+# Initiative Tracker Command
+@bot.hybrid_group(help=init_help_text(), brief="Initiative tracker")
+async def init(ctx):
+	if ctx.invoked_subcommand is None:
+		await ctx.send("Need further instruction. Use `!help init` for further help.")
+@init.command(help=init_start_help_text(), brief="Initiates a new initiative")
+async def start(ctx):
+	global init_list
+	global curr_player
+	global dm
+	init_list = []
+	curr_player = 0
+	dm = ctx.message.author
+	await ctx.send("New initiative has been started.\nUse `/init add` to add players or other creatures into it")
+@init.command(help=init_add_help_text(), brief="Add to the initiative order (DMs can set secrecy to `hidden` to change visibility)")
+async def add(ctx, name, init_roll, secrecy="visible"):
+	global init_list
+	global dm
+	if dm.name != ctx.message.author.name:
+		secrecy = False
+	if type(secrecy) is str:
+		if secrecy.startswith("h"):
+			secrecy = True
+		elif secrecy.startswith("v"):
+			secrecy = False
+	temp = Creature(name, init_roll, secrecy)
+	init_list.append(temp)
+	init_list.sort(key=lambda varname:varname.initiative, reverse=True)
+	toPrint = name + " has been added to the initiative."
+	await ctx.send(toPrint)
+@init.command(help="Remove from the initiative order")
+async def remove(ctx, name):
+	global init_list
+	canRemove = False
+	index = None
+	for i in init_list:
+		if i.name == name and canRemove == False:
+			canRemove = True
+			index = init_list.index(i)
+	if canRemove:
+		del init_list[index]
+		toPrint = "```" + name + " has been removed from the initiative.```"
+	else:
+		toPrint = "```" + name + " not in initiative order.```"
+	await ctx.send(toPrint)
+@init.command(help="View the full initiative order")
+async def view(ctx):
+	global init_list
+	global curr_player
+	global dm
+	toPrint = "```DM: " + dm.display_name
+	if dm.display_name != dm.name:
+		toPrint += " (" + dm.name + ")"
+	toPrint += "\n\n***Initiative order***\n"
+	for i in init_list:
+		if not i.isSecret or dm.name == ctx.message.author.name:
+			if curr_player == init_list.index(i):
+				toPrint += "⬐ Taking their turn\n"
+			toPrint += i.name + " - " + str(i.initiative)[:-2]
+			if i.hasCond:
+				toPrint += " - " + i.condition.upper()
+			toPrint += "\n"
+			if curr_player == init_list.index(i):
+				toPrint += "⬑ Taking their turn\n"
+	toPrint += "```"
+	await ctx.send(toPrint)
+@init.command(help=init_next_help_text(), brief="Continue the initiative order")
+async def next(ctx):
+	global init_list
+	global curr_player
+	init_list[curr_player].update()
+	curr_player += 1
+	if curr_player >= len(init_list)-1:
 		curr_player = 0
-		dm = ctx.message.author
-		await ctx.send("New initiative has been started.\nUse `!init add` to add players or other creatures into it")
-	@init.command(help=init_add_help_text(), brief="Add to the initiative order", usage="[name] [initiative roll].[DEX modifier] [visible/hidden]")
-	async def add(ctx, name, init_roll, secrecy="visible"):	#idk why tf this doesnt wanna take self anymore but it doesnt
-		global init_list
-		global dm
-		if dm.name != ctx.message.author.name:
-			secrecy = 0
-		if type(secrecy) is str:
-			if secrecy.startswith("h"):
-				secrecy = 1
-			elif secrecy.startswith("v"):
-				secrecy = 0
-		temp = Creature(name, init_roll, secrecy)
-		init_list.append(temp)
-		init_list.sort(key=lambda varname:varname.initiative, reverse=True)
-		toPrint = name + " has been added to the initiative."
-		await ctx.send(toPrint)
-	@init.command(help="Remove from the initiative order", usage="[name]")
-	async def remove(ctx, name): #no want self
-		global init_list
-		canRemove = False
-		index = None
-		for i in init_list:
-			if i.name == name and canRemove == False:
-				canRemove = True
-				index = init_list.index(i)
-		if canRemove:
-			del init_list[index]
-			toPrint = "```" + name + " has been removed from the initiative.```"
-		else:
-			toPrint = "```" + name + " not in initiative order.```"
-		await ctx.send(toPrint)
-	@init.command(help="View the full initiative order")
-	async def view(self, ctx):
-		global init_list
-		global curr_player
-		global dm
-		toPrint = "```DM: " + dm.display_name
-		if dm.display_name != dm.name:
-			toPrint += " (" + dm.name + ")"
-		toPrint += "\n\n***Initiative order***\n"
-		for i in init_list:
-			if not i.isSecret or dm.name == ctx.message.author.name:
-				if curr_player == init_list.index(i):
-					toPrint += "⬐ Taking their turn\n"
-				toPrint += i.name + " - " + str(i.initiative)[:-2]
-				if i.hasCond:
-					toPrint += " - " + i.condition.upper()
-				toPrint += "\n"
-				if curr_player == init_list.index(i):
-					toPrint += "⬑ Taking their turn\n"
+	toPrint = "```" + init_list[curr_player].name + " is now taking their turn. "
+	if init_list[curr_player].hasCond:
+		toPrint += init_list[curr_player].name + " is currently " + init_list[curr_player].condition + "."
+	toPrint +="```"
+	await ctx.send(toPrint)
 
-		toPrint += "```"
-		await ctx.send(toPrint)
-	@init.command(help=init_next_help_text(), brief="Continue the initiative order")
-	async def next(self, ctx):
-		global init_list
-		global curr_player
-		init_list[curr_player].update()
-		curr_player += 1
-		if curr_player >= len(init_list)-1:
-			curr_player = 0
-		toPrint = "```" + init_list[curr_player].name + " is now taking their turn. "
-		if init_list[curr_player].hasCond:
-			toPrint += init_list[curr_player].name + " is currently " + init_list[curr_player].condition + "."
-		toPrint +="```"
-		await ctx.send(toPrint)
+# Condition Tracker Command
+@bot.hybrid_group(help=condition_help_text(), brief="Condition tracker (Must be used alongside the initiative tracker)")
+async def condition(ctx):
+	if ctx.invoked_subcommand is None:
+		await ctx.send("Need further instruction. Use `!help condition` for further help.")
+@condition.command(help=condition_add_help_text(), brief="Add a condition to a creature")
+async def add(ctx, name, cond, turns=-1):
+	global init_list
+	checker = False
+	for i in init_list:
+		if i.name == name:
+			checker = True
+			i.condition = cond
+			i.conditionDuration = int(turns)
+			i.hasCond = True
+			if turns == -1:
+				await ctx.send(name + " has been " + cond + " indefinitely!")
+			else:
+				await ctx.send(name + " has been " + cond + " for the next " + str(turns) + " turns!")
+	if not checker:
+		await ctx.send("Creature was not found.")
+@condition.command(help="Removes a creature's condition")
+async def remove(ctx, name):
+	global init_list
+	doesExist = False
+	index = None
+	for i in init_list:
+		if i.name == name:
+			doesExist = True
+			index = init_list.index(i)
+	if not doesExist:
+		await ctx.send(name + " is not in the initiaive order.")
+	elif init_list[index].hasCond == False:
+		await ctx.send(name + " does not have a condition.")
+	else:
+		init_list[index].hasCond = False
+		init_list[index].condition = None
+		init_list[index].conditionDuration = 0
+		await ctx.send(name + "'s condition has been removed.")
 
-	@commands.group(help=condition_help_text(), brief="Condition tracker (Must be used alongside the initiative tracker)", usage="[add, remove]")
-	async def condition(self, ctx):
-		if ctx.invoked_subcommand is None:
-			await ctx.send("Need further instruction. Use `!help condition` for further help.")
-	@condition.command(help=condition_add_help_text(), brief="Add a condition to a creature", usage="[name] [condition] [turns]")
-	async def add(self, ctx, name, cond, turns=-1):
-		global init_list
-		checker = False
-		for i in init_list:
-			if i.name == name:
-				checker = True
-				i.condition = cond
-				i.conditionDuration = int(turns)
-				i.hasCond = True
-				if turns == -1:
-					await ctx.send(name + " has been " + cond + " indefinitely!")
-				else:
-					await ctx.send(name + " has been " + cond + " for the next " + str(turns) + " turns!")
-		if not checker:
-			await ctx.send("Creature was not found.")
-	@condition.command(help="Removes a creature's condition", usage="[name]")
-	async def remove(self, ctx, name):			#also doesnt want self ig
-		global init_list
-		doesExist = False
-		index = None
-		for i in init_list:
-			if i.name == name:
-				doesExist = True
-				index = init_list.index(i)
-		if not doesExist:
-			await ctx.send(name + " is not in the initiaive order.")
-		elif init_list[index].hasCond == False:
-			await ctx.send(name + " does not have a condition.")
-		else:
-			init_list[index].hasCond = False
-			init_list[index].condition = None
-			init_list[index].conditionDuration = 0
-			await ctx.send(name + "'s condition has been removed.")
+# Watch Keeper Command
+@bot.hybrid_command(help="Sends message to help keep track of who's keeping watch")
+async def keepwatch(ctx):
+	text = "Night approaches...\nWho will take each watch?"
+	msg = await ctx.send(text)
+	nums = ["1⃣", "2⃣", "3⃣", "4⃣"]
+	for i in nums:
+		await msg.add_reaction(i)
 
-	@commands.command(help="Sends message to help keep track of who's keeping watch")
-	async def keepwatch(self, ctx):
-		text = "Night approaches...\nWho will take each watch?"
-		msg = await ctx.send(text)
-		nums = ["1⃣", "2⃣", "3⃣", "4⃣"]
-		for i in nums:
-			await msg.add_reaction(i)
+# Inventory Command
+@bot.hybrid_command(help="Check a party's inventory or bank. Include the name of the party to skip the selection menu")
+async def inventory(ctx, party=None):
+	if(party == None):
+		msg = await ctx.send("```One moment please...```")
+		view = InventoryView(bot, ctx, msg, con)
+		await msg.edit(content=msg.content, view=view)
+		await view.update()
+	else:
+		msg = await ctx.send("```One moment please...```")
+		view = Inventory2View(bot, ctx, msg, con, party)
+		await msg.edit(content=msg.content, view=view)
+		await view.update()
 
-	@commands.command(help="Check a party's inventory or bank\nInclude the name of the party to skip the selection menu")
-	async def inventory(self, ctx, party=None):
-		if(party == None):
-			inventories = get_parties_from_db(con)
-			msg_str = "```SAVED INVENTORIES\n\n"
-			first = True
-			for i in inventories:
-				if first:
-					msg_str += ">>" + i[0] + "<<\n"
-					first = False
-				else:
-					msg_str += i[0] + "\n"
-			msg_str += "```"
-			msg = await ctx.send(msg_str)
-			view = InventoryView(bot, ctx, msg, con)
-			await msg.edit(view=view)
-			await view.wait()
-			await msg.delete()
-		else:
-			contents = get_items_from_db(con, party)
-			first = True
-			msg_str = "```INVENTORY CONTENTS\n\n"
-			count = 1
-			for i in contents:
-				if first:
-					msg_str += str(count) + ". " + ">> " + i[0] + " <<"
-					first = False
-				else:
-					msg_str += str(count) + ". " + i[0]
-				if i[1] != None:
-					msg_str += " - " + i[1]
-				msg_str += "\n"
-				count += 1
-			msg_str += "```"
-			msg = await ctx.send(msg_str)
-			view = Inventory2View(bot, ctx, msg, con, party)
-			await msg.edit(view=view)
-
-class server(commands.Cog, name="Server/Bot Related"):
-	def _init_(self, bot):
-		self.bot = bot
-
-	@commands.command(help="Prints the current version's changelog")
-	async def changelog(self, ctx):
-		chlg = "```"
-		with open("changelog.txt", 'r') as file:
+#
+#	Server Commands
+#
+# Changelog Command
+@bot.hybrid_command(help="Prints the current version's changelog")
+async def changelog(ctx):
+	chlg = "```"
+	with open("changelog.txt", 'r') as file:
+		line = file.readline()
+		while line != "***CURRENT VERSION***\n":
 			line = file.readline()
-			while line != "***CURRENT VERSION***\n":
-				line = file.readline()
-			while line != "":
-				line = file.readline()
-				if len(line) + len(chlg) >= 1990:
-					await ctx.send(chlg + "```")
-					chlg = "```" + line
-				else:
-					chlg += line
-			await ctx.send(chlg + "```")
+		while line != "":
+			line = file.readline()
+			if len(line) + len(chlg) >= 1990:
+				await ctx.send(chlg + "```")
+				chlg = "```" + line
+			else:
+				chlg += line
+		await ctx.send(chlg + "```")
 
-	@commands.command(hidden=True)
-	async def shutdown(self, ctx):
-		global con
-		if await bot.is_owner(ctx.message.author):
-			con.close()
-			await ctx.message.delete()
-			await ctx.send("```ROTOM BOT SHUTTING DOWN```")
-			await bot.close()
+# Shutdown Command
+@bot.hybrid_command(hidden=True)
+async def shutdown(ctx):
+	global con
+	if await bot.is_owner(ctx.message.author):
+		con.close()
+		await ctx.send("```ROTOM BOT SHUTTING DOWN```")
+		await bot.close()
 
+# Sync Command
+@bot.hybrid_command(hidden=True)
+async def sync(ctx):
+	await bot.tree.sync()
+	await ctx.send(content="Commands Synced")
 
-class misc(commands.Cog, name="Miscellanious"):
-	def _init_(self, bot):
-		self.bot = bot
-
-	@commands.command(help="repeat any phrase")
-	async def repeat(self, ctx, *, inp):
-		if type(ctx.channel) != discord.DMChannel:
-			await ctx.message.delete()
-		await ctx.send(inp)
-
-
-bot.add_cog(server())
-bot.add_cog(dnd())
-bot.add_cog(misc())
+#
+#	Misc Commands
+#
+# Repeat Command
+@bot.hybrid_command(help="repeat any phrase")
+async def repeat(ctx, inp):
+	await ctx.send(inp)
 
 bot.run(TOKEN)
