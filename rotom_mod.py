@@ -120,7 +120,7 @@ class InventoryView(discord.ui.View):
 	async def on_timeout(self):
 		await self.msg.delete()
 		self.stop()
-	async def update(self):
+	async def update(self, sysMsg=None):
 		msg_str = "```SAVED INVENTORIES\n\n"
 		for i in self.inventories:
 			if self.selected == self.inventories.index(i):
@@ -128,73 +128,58 @@ class InventoryView(discord.ui.View):
 			else:
 				msg_str += i[0] + "\n"
 		msg_str += "```"
+		if sysMsg != None:
+			msg_str += sysMsg
 		await self.msg.edit(content=msg_str)
-		return msg_str
-	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary)
-	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
+	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary)
+	async def up(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		if self.selected == 0:
-			return
+			self.selected = len(self.inventories)
 		self.selected -= 1
 		await self.update()
-	@discord.ui.button(label='Down', style=discord.ButtonStyle.secondary)
-	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
-		if self.selected == len(self.inventories)-1:
-			return
-		self.selected += 1
-		await self.update()
-	@discord.ui.button(label='Select', style=discord.ButtonStyle.green, row=2)
-	async def select(self, button: discord.ui.Button, interaction: discord.Interaction):
-		contents = get_items_from_db(self.con, str(self.inventories[self.selected][0]))
-		first = True
-		count = 1
-		msg_str = "```INVENTORY CONTENTS\n\n"
-		for i in contents:
-			if first:
-				msg_str += str(count) + ". " + ">> " + i[0] + " <<"
-				first = False
-			else:
-				msg_str += str(count) + ". " + i[0]
-			if i[1] != None:
-				msg_str += " - " + i[1]
-			msg_str += "\n"
-			count += 1
-		msg_str += "```"
-		msg = await self.ctx.send(msg_str)
+	@discord.ui.button(label='Select', style=discord.ButtonStyle.green, row=0)
+	async def select(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=None)
+		msg = await self.ctx.send(content="One second please...")
 		view = Inventory2View(self.bot, self.ctx, msg, self.con, str(self.inventories[self.selected][0]))
 		await msg.edit(view=view)
-		self.stop()
-	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red, row=2)
-	async def exit(self, button: discord.ui.Button, interaction: discord.Interaction):
+		await view.update()
 		await self.msg.delete()
-		self.stop()
-	@discord.ui.button(label='Create New', style=discord.ButtonStyle.green, row=3)
-	async def create(self, button: discord.ui.Button, interaction: discord.Interaction):
+	@discord.ui.button(label='Create New', style=discord.ButtonStyle.green, row=0)
+	async def create(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Respond with the name of the new inventory\n"
 		text += "Send 'CANCEL' to create nothing"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update()
-			await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to create the inventory, try again")
 		else:
 			content = msg.content
 			await msg.delete()
 			if content != "CANCEL":
 				add_item_to_db(self.con, msg.content, "BANK", value="0,0,0")
 				self.inventories = get_parties_from_db(self.con)
-				msg_str = await self.update()
-				await self.msg.edit(msg_str + msg.content + " created")
+				await self.update(msg.content+" created")
 			else:
-				await self.update()
-				await self.msg.edit(self.msg.content + "Cancelling...")
-	@discord.ui.button(label='Delete', style=discord.ButtonStyle.red, row=3)
-	async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
+				await self.update("Cancelling...")
+	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=1)
+	async def down(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
+		if self.selected == len(self.inventories)-1:
+			self.selected = -1
+		self.selected += 1
+		await self.update()
+	@discord.ui.button(label='Delete', style=discord.ButtonStyle.red, row=1)
+	async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Are you sure you want to delete this inventory and all of its contents?\n"
 		text += "Send 'YES' to delete, or anything else to cancel"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
@@ -211,11 +196,13 @@ class InventoryView(discord.ui.View):
 				self.inventories = get_parties_from_db(self.con)
 				if self.selected == len(self.inventories):
 					self.selected -= 1
-				msg_str = await self.update()
-				await self.msg.edit(msg_str + toDelete + " deleted")
+				await self.update(toDelete + " deleted")
 			else:
-				await self.update()
-				await self.msg.edit(self.msg.content + "Cancelling...")
+				await self.update("Cancelling...")
+	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red, row=1)
+	async def exit(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await self.msg.delete()
+		self.stop()
 
 class Inventory2View(discord.ui.View):
 	def __init__(self, bot, ctx, msg, con, party):
@@ -232,7 +219,7 @@ class Inventory2View(discord.ui.View):
 	async def on_timeout(self):
 		await self.msg.delete()
 		self.stop()
-	async def update(self):
+	async def update(self, sysMsg=None):
 		msg_str = "```INVENTORY CONTENTS\n\n"
 		count = 1
 		for i in self.contents:
@@ -245,61 +232,75 @@ class Inventory2View(discord.ui.View):
 			msg_str += "\n"
 			count += 1
 		msg_str += "```"
+		if sysMsg != None:
+			msg_str += sysMsg
 		await self.msg.edit(content=msg_str)
-		return msg_str
 	@discord.ui.button(label='Bank', style=discord.ButtonStyle.primary, row=0)
-	async def bank(self, button: discord.ui.Button, interaction: discord.Interaction):
-		vault = get_bank_from_db(self.con, self.party).split(",")
-		msg_str = "```Bank Contents\n\n"
-		temp = [" c", " s", " g"]
-		count = 0
-		for i in vault:
-			msg_str += i + temp[count] + "\n"
-			count += 1
-		msg_str += "```"
-		msg = await self.ctx.send(msg_str)
+	async def bank(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=None)
+		msg = await self.ctx.send("One moment...")
 		view = BankView(self.bot, self.ctx, msg, self.con, self.party)
 		await msg.edit(view=view)
+		await view.update()
 		await self.msg.delete()
-	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary, row=1)
-	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
+	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary, row=1)
+	async def up(self, interaction: discord.Interaction, button: discord.ui.Button):
 		if self.selected == 0:
-			return
+			self.selected = len(self.contents)
 		self.selected -= 1
 		await self.update()
-	@discord.ui.button(label='Down', style=discord.ButtonStyle.secondary, row=1)
-	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
+		await interaction.response.edit_message(view=self)
+	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=1)
+	async def down(self, interaction: discord.Interaction, button: discord.ui.Button):
 		if self.selected == len(self.contents)-1:
-			return
+			self.selected = -1
 		self.selected += 1
 		await self.update()
-	@discord.ui.button(label='Up 5', style=discord.ButtonStyle.secondary, row=2)
-	async def upfive(self, button: discord.ui.Button, interaction: discord.Interaction):
-		if self.selected <= 4:
-			self.selected = 0
+		await interaction.response.edit_message(view=self)
+	@discord.ui.button(label='Change Value', style=discord.ButtonStyle.green, row=1)
+	async def edit_value(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
+		text = "Enter what you would like to set the new value of the item to\n"
+		text += "Enter 'NONE' if you would like the item to have no value\n"
+		text += "Enter 'CANCEL' if you would like to cancel any input"
+		await self.update(text)
+		def check(m):
+			return m.channel == self.ctx.channel and m.author == self.ctx.author
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.update("You ran out of time to set the currency, try again")
 		else:
-			self.selected -= 5
-		await self.update()
-	@discord.ui.button(label='Down 5', style=discord.ButtonStyle.secondary, row=2)
-	async def downfive(self, button: discord.ui.Button, interaction: discord.Interaction):
-		if self.selected >= len(self.contents)-6:
-			self.selected = len(self.contents)-1
-		else:
-			self.selected += 5
-		await self.update()
-	@discord.ui.button(label='Add Item', style=discord.ButtonStyle.green, row=3)
-	async def add_item(self, button: discord.ui.Button, interaction: discord.Interaction):
+			content = msg.content
+			await msg.delete()
+			if content == "CANCEL":
+				await self.update("Cancelling...")
+			elif content == "NONE":
+				item_name = self.contents[self.selected][0]
+				set_value_from_db(self.con, self.party, item_name, None)
+				self.contents = get_items_from_db(self.con, self.party)
+				await self.update(item_name + "'s value removed")
+			else:
+				if not content.isnumeric():
+					await self.update("ERROR: That is not a number")
+				else:
+					item_name = self.contents[self.selected][0]
+					set_value_from_db(self.con, self.party, item_name, content)
+					self.contents = get_items_from_db(self.con, self.party)
+					await self.update(item_name + "'s value set to " + content)
+	@discord.ui.button(label='Add Item', style=discord.ButtonStyle.green, row=1)
+	async def add_item(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Respond with which item you would like to add\n"
 		text += "If it has a numerical value, add a comma and a space(', ') after with only the value\n"
 		text += "Send 'CANCEL' to add nothing"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.ctx.channel and m.author == self.ctx.author and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update()
-			await self.msg.edit(self.msg.content + "You ran out of time to add the item, try again")
+			await self.update("You ran out of time to add the item, try again")
 		else:
 			content = msg.content
 			await msg.delete()
@@ -309,58 +310,40 @@ class Inventory2View(discord.ui.View):
 					add_item_to_db(self.con, self.party, splitMSG[0])
 					self.contents = get_items_from_db(self.con, self.party)
 					msg_str = await self.update()
-					await self.msg.edit(msg_str + splitMSG[0] + " added to the inventory")
+					await self.update(splitMSG[0] + " added to the inventory")
 				else:
 					add_item_to_db(self.con, self.party, splitMSG[0], splitMSG[1])
 					self.contents = get_items_from_db(self.con, self.party)
-					msg_str = await self.update()
-					await self.msg.edit(msg_str + splitMSG[1] + " " + splitMSG[0] + " added to the inventory")
+					await self.update(splitMSG[1] + " " + splitMSG[0] + " added to the inventory")
 			else:
-				await self.msg.edit(self.msg.content + "Cancelling...")
-	@discord.ui.button(label='Remove', style=discord.ButtonStyle.red, row=3)
-	async def delete_item(self, button: discord.ui.Button, interaction: discord.Interaction):
+				await self.update("Cancelling...")
+	@discord.ui.button(label='ᐱ5', style=discord.ButtonStyle.secondary, row=2)
+	async def upfive(self, interaction: discord.Interaction, button: discord.ui.Button):
+		if self.selected <= 4:
+			self.selected = 0
+		else:
+			self.selected -= 5
+		await self.update()
+		await interaction.response.edit_message(view=self)
+	@discord.ui.button(label='ᐯ5', style=discord.ButtonStyle.secondary, row=2)
+	async def downfive(self, interaction: discord.Interaction, button: discord.ui.Button):
+		if self.selected >= len(self.contents)-6:
+			self.selected = len(self.contents)-1
+		else:
+			self.selected += 5
+		await self.update()
+		await interaction.response.edit_message(view=self)
+	@discord.ui.button(label='Remove', style=discord.ButtonStyle.red, row=2)
+	async def delete_item(self, interaction: discord.Interaction, button: discord.ui.Button):
 		remove_item_from_db(self.con, self.party, self.contents[self.selected][0])
 		self.contents = get_items_from_db(self.con, self.party)
 		if self.selected == 0:
 			self.selected = 1
 		self.selected -= 1
 		await self.update()
-	@discord.ui.button(label='Change Value', style=discord.ButtonStyle.green, row=4)
-	async def edit_value(self, button: discord.ui.Button, interaction: discord.Interaction):
-		text = "Enter what you would like to set the new value of the item to\n"
-		text += "Enter 'NONE' if you would like the item to have no value\n"
-		text += "Enter 'CANCEL' if you would like to cancel any input"
-		await self.msg.edit(self.msg.content + text)
-		def check(m):
-			return m.channel == self.ctx.channel and m.author == self.ctx.author
-		try:
-			msg = await self.bot.wait_for('message', check=check, timeout=120)
-		except asyncio.TimeoutError:
-			await self.update()
-			await self.msg.edit(self.msg.content + "You ran out of time to set the currency, try again")
-		else:
-			content = msg.content
-			await msg.delete()
-			if content == "CANCEL":
-				await self.msg.edit(self.msg.content + "Cancelling...")
-			elif content == "NONE":
-				item_name = self.contents[self.selected][0]
-				set_value_from_db(self.con, self.party, item_name, None)
-				self.contents = get_items_from_db(self.con, self.party)
-				msg_str = await self.update()
-				await self.msg.edit(msg_str + item_name + "'s value removed")
-			else:
-				if not content.isnumeric():
-					await self.update()
-					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
-				else:
-					item_name = self.contents[self.selected][0]
-					set_value_from_db(self.con, self.party, item_name, content)
-					self.contents = get_items_from_db(self.con, self.party)
-					msg_str = await self.update()
-					await self.msg.edit(msg_str + item_name + "'s value set to " + content)
-	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red, row=4)
-	async def exit(self, button: discord.ui.Button, interaction: discord.Interaction):
+		await interaction.response.edit_message(view=self)			
+	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red, row=2)
+	async def exit(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await self.msg.delete()
 		self.stop()
 
@@ -379,7 +362,7 @@ class BankView(discord.ui.View):
 	async def on_timeout(self):
 		await self.msg.delete()
 		self.stop()
-	async def update(self):
+	async def update(self, sysMsg=None):
 		msg_str = "```Bank Contents\n\n"
 		temp = [" c", " s", " g"]
 		count = 0
@@ -387,28 +370,28 @@ class BankView(discord.ui.View):
 			msg_str += i + temp[count] + "\n"
 			count += 1
 		msg_str += "```"
-		await self.msg.edit(msg_str)
-		return msg_str
-	@discord.ui.button(label='Add Copper', style=discord.ButtonStyle.secondary, row=1)
-	async def addC(self, button: discord.ui.Button, interaction: discord.Interaction):
+		if sysMsg != None:
+			msg_str += sysMsg
+		await self.msg.edit(content=msg_str)
+	@discord.ui.button(label='Add Ⓒ', style=discord.ButtonStyle.secondary, row=1)
+	async def addC(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Enter what you would like to add to the Copper storage"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update()
-			await self.msg.edit(self.msg.content + "You ran out of time to add the currency, try again")
+			await self.update("You ran out of time to add the currency, try again")
 		else:
 			content = msg.content
 			await msg.delete()
 			if content == "CANCEL":
-				await self.msg.edit(self.msg.content + "Cancelling...")
+				await self.update("Cancelling...")
 			else:
 				if not content.isnumeric():
-					await self.update()
-					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
+					await self.update("ERROR: That is not a number")
 				else:
 					temp = int(self.vault[0]) + int(content)
 					self.vault[0] = str(temp)
@@ -417,28 +400,26 @@ class BankView(discord.ui.View):
 						temp_vault += i + ","
 					temp = temp_vault.rstrip(',')
 					set_value_from_db(self.con, self.party, "BANK", temp)
-					msg_str = await self.update()
-					await self.msg.edit(msg_str + content + " Copper added to the bank")
-	@discord.ui.button(label='Set Copper', style=discord.ButtonStyle.secondary, row=2)
-	async def setC(self, button: discord.ui.Button, interaction: discord.Interaction):
+					msg_str = await self.update(content + " Copper added to the bank")
+	@discord.ui.button(label='Set Ⓒ', style=discord.ButtonStyle.secondary, row=2)
+	async def setC(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Enter what you would like to set the new value of the Copper storage to"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update()
-			await self.msg.edit(self.msg.content + "You ran out of time to set the currency, try again")
+			await self.update("You ran out of time to set the currency, try again")
 		else:
 			content = msg.content
 			await msg.delete()
 			if content == "CANCEL":
-				await self.msg.edit(self.msg.content + "Cancelling...")
+				await self.update("Cancelling...")
 			else:
 				if not content.isnumeric():
-					await self.update()
-					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
+					await self.update("ERROR: That is not a number")
 				else:
 					self.vault[0] = content
 					temp_vault = ""
@@ -446,28 +427,26 @@ class BankView(discord.ui.View):
 						temp_vault += i + ","
 					temp = temp_vault.rstrip(',')
 					set_value_from_db(self.con, self.party, "BANK", temp)
-					msg_str = await self.update()
-					await self.msg.edit(msg_str + content + " Copper in the bank")
-	@discord.ui.button(label='Add Silver', style=discord.ButtonStyle.secondary, row=1)
-	async def addS(self, button: discord.ui.Button, interaction: discord.Interaction):
+					await self.update(content + " Copper in the bank")
+	@discord.ui.button(label='Add Ⓢ', style=discord.ButtonStyle.secondary, row=1)
+	async def addS(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Enter what you would like to add to the Silver storage"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update()
-			await self.msg.edit(self.msg.content + "You ran out of time to add the currency, try again")
+			await self.update("You ran out of time to add the currency, try again")
 		else:
 			content = msg.content
 			await msg.delete()
 			if content == "CANCEL":
-				await self.msg.edit(self.msg.content + "Cancelling...")
+				await self.update("Cancelling...")
 			else:
 				if not content.isnumeric():
-					await self.update()
-					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
+					await self.update("ERROR: That is not a number")
 				else:
 					temp = int(self.vault[1]) + int(content)
 					self.vault[1] = str(temp)
@@ -476,28 +455,26 @@ class BankView(discord.ui.View):
 						temp_vault += i + ","
 					temp = temp_vault.rstrip(',')
 					set_value_from_db(self.con, self.party, "BANK", temp)
-					msg_str = await self.update()
-					await self.msg.edit(msg_str + content + " Silver added to the bank")
-	@discord.ui.button(label='Set Silver', style=discord.ButtonStyle.secondary, row=2)
-	async def setS(self, button: discord.ui.Button, interaction: discord.Interaction):
+					await self.update(content + " Silver added to the bank")
+	@discord.ui.button(label='Set Ⓢ', style=discord.ButtonStyle.secondary, row=2)
+	async def setS(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Enter what you would like to set the new value of the Silver storage to"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update()
-			await self.msg.edit(self.msg.content + "You ran out of time to set the currency, try again")
+			await self.update("You ran out of time to set the currency, try again")
 		else:
 			content = msg.content
 			await msg.delete()
 			if content == "CANCEL":
-				await self.msg.edit(self.msg.content + "Cancelling...")
+				await self.update("Cancelling...")
 			else:
 				if not content.isnumeric():
-					await self.update()
-					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
+					await self.update("ERROR: That is not a number")
 				else:
 					self.vault[1] = content
 					temp_vault = ""
@@ -505,12 +482,12 @@ class BankView(discord.ui.View):
 						temp_vault += i + ","
 					temp = temp_vault.rstrip(',')
 					set_value_from_db(self.con, self.party, "BANK", temp)
-					msg_str = await self.update()
-					await self.msg.edit(msg_str + content + " Silver in the bank")
-	@discord.ui.button(label='Add Gold', style=discord.ButtonStyle.secondary, row=1)
-	async def addG(self, button: discord.ui.Button, interaction: discord.Interaction):
+					await self.update(content + " Silver in the bank")
+	@discord.ui.button(label='Add Ⓖ', style=discord.ButtonStyle.secondary, row=1)
+	async def addG(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Enter what you would like to add to the Gold storage"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
@@ -522,11 +499,10 @@ class BankView(discord.ui.View):
 			content = msg.content
 			await msg.delete()
 			if content == "CANCEL":
-				await self.msg.edit(self.msg.content + "Cancelling...")
+				await self.update("Cancelling...")
 			else:
 				if not content.isnumeric():
-					await self.update()
-					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
+					await self.update("ERROR: That is not a number")
 				else:
 					temp = int(self.vault[2]) + int(content)
 					self.vault[2] = str(temp)
@@ -535,28 +511,26 @@ class BankView(discord.ui.View):
 						temp_vault += i + ","
 					temp = temp_vault.rstrip(',')
 					set_value_from_db(self.con, self.party, "BANK", temp)
-					msg_str = await self.update()
-					await self.msg.edit(msg_str + content + " Gold added to the bank")
-	@discord.ui.button(label='Set Gold', style=discord.ButtonStyle.secondary, row=2)
-	async def setG(self, button: discord.ui.Button, interaction: discord.Interaction):
+					await self.update(content + " Gold added to the bank")
+	@discord.ui.button(label='Set Ⓖ', style=discord.ButtonStyle.secondary, row=2)
+	async def setG(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Enter what you would like to set the new value of the Gold storage to"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.ctx.channel and m.author == self.ctx.author
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update()
-			await self.msg.edit(self.msg.content + "You ran out of time to set the currency, try again")
+			await self.update("You ran out of time to set the currency, try again")
 		else:
 			content = msg.content
 			await msg.delete()
 			if content == "CANCEL":
-				await self.msg.edit(self.msg.content + "Cancelling...")
+				await self.update("Cancelling...")
 			else:
 				if not content.isnumeric():
-					await self.update()
-					await self.msg.edit(self.msg.content + "ERROR: That is not a number")
+					await self.update("ERROR: That is not a number")
 				else:
 					self.vault[2] = content
 					temp_vault = ""
@@ -564,27 +538,17 @@ class BankView(discord.ui.View):
 						temp_vault += i + ","
 					temp = temp_vault.rstrip(',')
 					set_value_from_db(self.con, self.party, "BANK", temp)
-					msg_str = await self.update()
-					await self.msg.edit(msg_str + content + " Gold in the bank")
-	@discord.ui.button(label='Back', style=discord.ButtonStyle.primary, row=3)
-	async def back(self, button: discord.ui.Button, interaction: discord.Interaction):
-		contents = get_items_from_db(self.con, str(self.party))
-		first = True
-		msg_str = "```INVENTORY CONTENTS\n\n"
-		for i in contents:
-			if first:
-				msg_str += str(contents.index(i) + 1) + ". " + ">>" + i[0] + "<<\n"
-				first = False
-			else:
-				msg_str += str(contents.index(i) + 1) + ". " + i[0] + "\n"
-		msg_str += "```"
-		msg = await self.ctx.send(msg_str)
+					await self.update(" Gold in the bank")
+	@discord.ui.button(label='Back', style=discord.ButtonStyle.primary, row=1)
+	async def back(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=None)
+		msg = await self.ctx.send("Wait one moment...")
 		view = Inventory2View(self.bot, self.ctx, msg, self.con, str(self.party))
 		await msg.edit(view=view)
+		await view.update()
 		await self.msg.delete()
-		self.stop()
-	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red, row=3)
-	async def exit(self, button: discord.ui.Button, interaction: discord.Interaction):
+	@discord.ui.button(label='Exit', style=discord.ButtonStyle.red, row=2)
+	async def exit(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await self.msg.delete()
 		self.stop()
 
