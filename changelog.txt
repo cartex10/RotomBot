@@ -126,7 +126,7 @@ v3.0 release - 7/20/2022
 		- This meant essentially rewriting all of RotomBot, but it was necessary to do this in order to write any new functions
 		- This does mean all functions are now integrated into discord's slash commands, so silver lining and whatnot
 	-new SICK counter function
-		- Once a varaiable amount of separate people press the button, the bot will call for SICK to run
+		- Once a variable amount of separate people press the button, the bot will call for SICK to run
 	-bug fixes
 		- Inventory menus now work a lot cleaner
 		- Inventory menus are also much better organized
