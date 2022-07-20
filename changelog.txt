@@ -110,7 +110,6 @@ v2.4 release - 6/11/21
 		*With this functionality, any message in this channel with an Admin mention will be sent to the #admin-chat channel
 		*This is going to be used to help improve the server using member suggestions
 
-***CURRENT VERSION***
 v2.5 release - 9/21/2021
 	-new !inventory command
 		-this new command is the only thing added this update, but it's a big one!
@@ -120,3 +119,14 @@ v2.5 release - 9/21/2021
 		-bank can store copper, silver, and gold
 		-can store as many inventories as you want
 	-probably the final update, barring any small necessary fixes, due to the discord.py library no longer being worked on, and will break in April 2022
+
+***CURRENT VERSION***
+v3.0 release - 7/20/2022
+	-Upgrade to Discord.py v2.0
+		- This meant essentially rewriting all of RotomBot, but it was necessary to do this in order to write any new functions
+		- This does mean all functions are now integrated into discord's slash commands, so silver lining and whatnot
+	-new SICK counter function
+		- Once a varaiable amount of separate people press the button, the bot will call for SICK to run
+	-bug fixes
+		- Inventory menus now work a lot cleaner
+		- Inventory menus are also much better organized
