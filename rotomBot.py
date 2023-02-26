@@ -1,6 +1,6 @@
 # TO DO: fix calling init functions but dm is not defined
 #		 error handling on !inventory party for invalid names, return similar parties in db?
-#
+#		 have create_connection create tables if they don't exist
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -9,7 +9,7 @@ from rotom_mod import *
 
 import random
 import math
-import time
+import datetime
 
 print("Starting bot with discord.py v" + discord.__version__)
 load_dotenv()
@@ -29,8 +29,6 @@ global curr_player
 global dm
 global guild
 global con
-global sickMsg
-global sickArray
 on_check = False
 #
 #	Events and Listeners
@@ -409,7 +407,27 @@ async def sync(ctx):
 
 # SICK Command
 @bot.hybrid_command(hidden=True)
-async def sick(ctx, sicknum: int):
+async def sick(ctx, sicknum):
+	global con
+	global guild
+	if sicknum == "load":
+		num = get_SICK_num(con)
+		if num == 0:
+			await con.send("```No SICK in database to load from```")
+		else:
+			sicknum = num
+	elif sicknum == "log" and await bot.is_owner(ctx.message.author):
+		num = get_SICK_num(con)
+		clicks = get_SICK_clicks(con)
+		toPrint = str(num) + " button clicks are required\n"
+		toPrint += str(len(clicks)) + " users have clicked the button\n"
+		if len(clicks) != 0:
+			toPrint += "USER\t\t\t\t\tDATETIME"
+			for pair in clicks:
+				toPrint += pair[0] + "\t\t\t" + pair[1].strftime("%m/%d/%y @ %I:%M %p") + "\n"
+		await guild.owner.send(toPrint)
+		return
+	update_SICK(con, int(sicknum))
 	msg = await ctx.send(content = "Click the button below to put your vote in to start SICK!")
 	view = SickView(bot, ctx, msg, sicknum)
 	await msg.edit(view=view)
