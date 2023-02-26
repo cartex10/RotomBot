@@ -16,7 +16,7 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')				#Bot token
 guild_id = int(os.getenv('GUILD')) 		#Guild ID
 
-on_text = "```ACTIVATING ROTOM BOT\nVERSION 3.0 SUCCESSFULLY LOADED```"
+on_text = "```ACTIVATING ROTOM BOT\nVERSION 3.1 SUCCESSFULLY LOADED```"
 #on_text = "```ACTIVATING ROTOM BOT\nTEST VERSION SUCCESSFULLY LOADED```"
 
 base_activity = discord.Activity(type=discord.ActivityType.listening, name="your commands!")
