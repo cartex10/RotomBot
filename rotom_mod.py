@@ -26,6 +26,12 @@ class Creature:
 ##### DATA BASE FUNCTIONS #####
 def create_connection(path):				#connect to database
 	connection = sqlite3.connect(path)
+	try:
+		cursor = con.execute("SELECT id, value, clickDate, user FROM SICK")
+	except:
+		await msg.edit(content="```Creating SICK table```")
+		cursor = con.execute("CREATE TABLE SICK (id INT PRIMARY KEY NOT NULL, value INT NOT NULL, clickDate DATETIME, user TEXT);")
+		con.execute("INSERT INTO SICK VALUES (0, 0, NULL, NULL)")
 	return connection
 
 def ddc_return(connection):					#get ddc from database
@@ -103,6 +109,21 @@ def get_bank_from_db(connection, party):
 def set_value_from_db(connection, party, item, value):
 	cursor = connection.cursor()
 	cursor.execute("UPDATE inventories SET value=? WHERE party=? AND item=?", (value, party, item))
+	connection.commit()
+
+def get_SICK_num(connection):
+	cursor = connection.cursor()
+	cursor.execute("SELECT value FROM SICK WHERE value!=-1")
+	return int(cursor.fetchall()[0])
+
+def get_SICK_clicks(connection):
+	cursor = connection.cursor()
+	cursor.execute("SELECT value FROM SICK WHERE value=-1")
+	return (cursor.fetchall())
+
+def update_SICK(connection, newVal):
+	cursor = connection.cursor()
+	cursor.execute("UPDATE SICK SET value=? WHERE value!=-1", (newVal,))
 	connection.commit()
 
 ##### VIEWS #####
@@ -593,16 +614,11 @@ class SickView(discord.ui.View):
 ##### HELP TEXT #####
 def mem_join_text():
 	msg = "Hello! Welcome to our lovely server! We hope you enjoy your time here. :smile: \n"
-	msg += "Before you do anything, I recommend you mute `#music-control` so you're not bombarded by music notifications.\n"
-	msg += "To do this, just click the bell at the top of the window while looking at `#music-control`.\n\n"
-	msg += "Also, a bunch of channels are currently hidden behind some roles.\n"
-	msg += "This is so that your not bombarded by notifications for games or other stuff you don't care about.\n"
-	msg += "If there are hidden channels you want to be a part of, head on over to the `#pick-roles` channel,\n"
-	msg += "where using the reactions, you can assign yourself whichever role you want.\n"
+	msg += "I just wanted to give you a heads up about `#pick-roles` channel, "
+	msg += "where using the reactions, you can assign yourself a few roles to access different channels/pings.\n"
 	msg += "One role you should grab is `InWoburn`, which we use to ping people to hang out if they're in town\n\n"
-	msg += "I know that's a lot of information, but you only have to worry about this once.\n"
-	msg += "Anyhow, that's all I have to say, so I'll leave you off here!\n"
-	msg += "Remember to dm me `!help` if you want to know what I can do!"
+	msg += "Anyhow, there's a lot more I can do, but I don't want to bombard you with info.\n"
+	msg += "Remember to use `/help` if you want to know what I can do!"
 	return msg
 
 def init_help_text():
