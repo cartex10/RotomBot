@@ -410,26 +410,32 @@ async def sync(ctx):
 async def sick(ctx, sicknum):
 	global con
 	global guild
+	arr = []
 	if sicknum == "load":
 		num = get_SICK_num(con)
+		clicks = get_SICK_clicks(con)
 		if num == 0:
-			await con.send("```No SICK in database to load from```")
+			await ctx.send("```No SICK in database to load from```")
+			return
 		else:
-			sicknum = num
+			sicknum = int(num)
+			for pair in clicks:
+				arr.append(pair[0])
 	elif sicknum == "log" and await bot.is_owner(ctx.message.author):
 		num = get_SICK_num(con)
 		clicks = get_SICK_clicks(con)
-		toPrint = str(num) + " button clicks are required\n"
-		toPrint += str(len(clicks)) + " users have clicked the button\n"
+		toPrint = str(num) + " button click(s) are required\n"
+		toPrint += str(len(clicks)) + " user(s) have clicked the button\n"
 		if len(clicks) != 0:
-			toPrint += "USER\t\t\t\t\tDATETIME"
+			toPrint += "```USER\t\t\t\t\tDATETIME\n"
 			for pair in clicks:
-				toPrint += pair[0] + "\t\t\t" + pair[1].strftime("%m/%d/%y @ %I:%M %p") + "\n"
-		await guild.owner.send(toPrint)
+				username = guild.get_member(pair[0]).name
+				toPrint += username + "\t\t\t" + pair[1] + "\n"
+		await guild.owner.send(toPrint + "```")
 		return
 	update_SICK(con, int(sicknum))
 	msg = await ctx.send(content = "Click the button below to put your vote in to start SICK!")
-	view = SickView(bot, ctx, msg, sicknum)
+	view = SickView(bot, ctx, msg, int(sicknum), con, arr)
 	await msg.edit(view=view)
 #
 #	Misc Commands

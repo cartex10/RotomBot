@@ -1,4 +1,4 @@
-import aiohttp, asyncio, discord, sqlite3
+import aiohttp, asyncio, discord, sqlite3, datetime
 from enum import Enum
 
 class Creature:
@@ -27,11 +27,10 @@ class Creature:
 def create_connection(path):				#connect to database
 	connection = sqlite3.connect(path)
 	try:
-		cursor = con.execute("SELECT id, value, clickDate, user FROM SICK")
+		cursor = connection.execute("SELECT id, value, clickDate, user FROM SICK")
 	except:
-		await msg.edit(content="```Creating SICK table```")
-		cursor = con.execute("CREATE TABLE SICK (id INT PRIMARY KEY NOT NULL, value INT NOT NULL, clickDate DATETIME, user TEXT);")
-		con.execute("INSERT INTO SICK VALUES (0, 0, NULL, NULL)")
+		cursor = connection.execute("CREATE TABLE SICK (id INTEGER PRIMARY KEY NOT NULL, value INT NOT NULL, user INT, clickDate TEXT);")
+		connection.execute("INSERT INTO SICK VALUES (0, 0, NULL, NULL)")
 	return connection
 
 def ddc_return(connection):					#get ddc from database
@@ -114,16 +113,27 @@ def set_value_from_db(connection, party, item, value):
 def get_SICK_num(connection):
 	cursor = connection.cursor()
 	cursor.execute("SELECT value FROM SICK WHERE value!=-1")
-	return int(cursor.fetchall()[0])
+	return int(cursor.fetchall()[0][0])
 
 def get_SICK_clicks(connection):
 	cursor = connection.cursor()
-	cursor.execute("SELECT value FROM SICK WHERE value=-1")
+	cursor.execute("SELECT user, clickDate FROM SICK WHERE value=-1")
 	return (cursor.fetchall())
 
 def update_SICK(connection, newVal):
 	cursor = connection.cursor()
 	cursor.execute("UPDATE SICK SET value=? WHERE value!=-1", (newVal,))
+	connection.commit()
+
+def add_click(connection, user, clickDate):
+	params = (-1, user, clickDate)
+	cursor = connection.cursor()
+	cursor.execute("INSERT INTO SICK VALUES (NULL, ?, ?, ?)", params)
+	connection.commit()
+
+def clear_clicks(connection):
+	cursor = connection.cursor()
+	cursor.execute("DELETE FROM SICK WHERE value=-1")
 	connection.commit()
 
 ##### VIEWS #####
@@ -574,20 +584,21 @@ class BankView(discord.ui.View):
 		self.stop()
 
 class SickView(discord.ui.View):
-	def __init__(self, bot, ctx, msg, maxim):
+	def __init__(self, bot, ctx, msg, maxim, con, arr):
 		super().__init__()
 		self.timeout = 0
 		self.bot = bot
 		self.ctx = ctx
 		self.msg = msg
-		self.arr = []
+		self.con = con
+		self.arr = arr
 		self.num = 0
 		self.maxim = maxim
 	@discord.ui.button(label="SICK", style=discord.ButtonStyle.green)
 	async def butt(self, interaction:discord.Interaction, button:discord.ui.Button):
 		inFlag = False
 		for i in self.arr:
-			if i == interaction.user:
+			if i == interaction.user.id:
 				inFlag = True
 		if not inFlag:
 			self.num += 1
@@ -597,13 +608,17 @@ class SickView(discord.ui.View):
 				self.butt.label = "IT'S TIME"
 				text = "@everyone Calling all server members! It is time to decide on the future appearance of the server, you have one week!"
 				await interaction.response.send_message(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
+				clear_clicks(self.con)
+				update_SICK(self.con, 0)
 				self.stop()
 			else:
-				self.arr.append(interaction.user)
+				self.arr.append(interaction.user.id)
 				text = "Thank you for participating ❤️️ \n"
 				text += str(self.maxim - self.num)
 				text += " people need to press the button to trigger SICK"
 				await interaction.user.send(text)
+				add_click(self.con, interaction.user.id, datetime.datetime.now().strftime("%m/%d/%y @ %I:%M %p"))
+				update_SICK(self.con, self.maxim - self.num)
 				await interaction.response.edit_message(view=self)
 		else:
 			text = "You have already pressed the button!\n"
