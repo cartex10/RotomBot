@@ -45,7 +45,7 @@ async def on_ready():
 		on_check = True
 		con = create_connection("rotom_database.db")
 		await bot.tree.sync()
-		await chan.send(on_text)
+		#await chan.send(on_text)
 
 @bot.event									#sends introductory dm to new members
 async def on_member_join(mem):				
