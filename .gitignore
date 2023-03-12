@@ -1,0 +1,4 @@
+.env
+*.db
+proto.py
+__pycache__
