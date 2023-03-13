@@ -1,5 +1,6 @@
 import aiohttp, asyncio, discord, sqlite3, datetime
 from enum import Enum
+from datetime import timedelta
 
 class Creature:
 	name = "None"
@@ -23,7 +24,21 @@ class Creature:
 		else:
 			self.hasCond = False
 
-##### DATA BASE FUNCTIONS #####
+class Timer:
+	def __init__(self, timeout, callback, args=None):
+		self._timeout = timeout
+		self._callback = callback
+		self._args = args
+		self._task = asyncio.ensure_future(self._job())
+
+	async def _job(self):
+		await asyncio.sleep(self._timeout)
+		await self._callback(self._args)
+
+	def cancel(self):
+		self._task.cancel()
+
+##### DATABASE FUNCTIONS #####
 def create_connection(path):				#connect to database
 	connection = sqlite3.connect(path)
 	try:
@@ -135,6 +150,35 @@ def clear_clicks(connection):
 	cursor = connection.cursor()
 	cursor.execute("DELETE FROM SICK WHERE value=-1")
 	connection.commit()
+
+##### ALARM FUNCTIONS #####
+async def EndRem(args):
+	step = args["step"]
+	chan = args["chan"]
+	if step == 0:
+		text = "@everyone 24 hours remain for Picture entries/votes, make sure to at least check out other people's entries!"
+		await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
+	if step == 1:
+		text = "@everyone 24 hours remain for Title entries/votes, even if you can't think of you're own entry, at least vote for other's!"
+		await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
+
+async def PicEnd(args):
+	chan = args["chan"]
+	con = args["con"]
+	text = "@everyone Votes are in! Please wait a little bit while votes are counted, but either way entries/votes for the server name are due "
+	date = datetime.datetime.combine((datetime.date.today() + timedelta(days=3)), datetime.time(hour=6, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
+	text += date.strftime("%A, %B %d!")
+	await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
+	rem_timer = Timer(10, EndRem, args={"step":1, "chan":chan})
+	fin_timer = Timer(20, NameEnd, args={"chan":chan, "con":con})
+
+async def NameEnd(args):
+	chan = args["chan"]
+	con = args["con"]
+	text = "@everyone Thank you for participating, SICK is over for now, the winner will be revealed soon!"
+	await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
+	clear_clicks(con)
+	update_SICK(con, 0)
 
 ##### VIEWS #####
 class InventoryView(discord.ui.View):
@@ -602,29 +646,31 @@ class SickView(discord.ui.View):
 				inFlag = True
 		if not inFlag:
 			self.num += 1
+			self.arr.append(interaction.user.id)
+			add_click(self.con, interaction.user.id, datetime.datetime.now().strftime("%m/%d/%y @ %I:%M %p"))
+			update_SICK(self.con, self.maxim - self.num)
 			if self.num == self.maxim:
 				# If maximum amount of people have "voted"
 				self.butt.style = discord.ButtonStyle.red
 				self.butt.label = "IT'S TIME"
-				text = "@everyone Calling all server members! It is time to decide on the future appearance of the server, you have one week!"
+				text = "@everyone Calling all server members! It is time to decide on the future appearance of the server, "
+				text += "please send in your goofiest ideas for the next server icon, due "
+				date = datetime.datetime.combine((datetime.date.today() + timedelta(days=4)), datetime.time(hour=6, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
+				text += date.strftime("%A, %B %d!")
 				await interaction.response.send_message(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
-				clear_clicks(self.con)
-				update_SICK(self.con, 0)
+				rem_timer = Timer(10, EndRem, args={"step":0, "chan":self.ctx.channel})
+				fin_timer = Timer(20, PicEnd, args={"chan":self.ctx.channel, "con":self.con})
 				self.stop()
 			else:
-				self.arr.append(interaction.user.id)
 				text = "Thank you for participating ❤️️ \n"
 				text += str(self.maxim - self.num)
 				text += " people need to press the button to trigger SICK"
 				await interaction.user.send(text)
-				add_click(self.con, interaction.user.id, datetime.datetime.now().strftime("%m/%d/%y @ %I:%M %p"))
-				update_SICK(self.con, self.maxim - self.num)
 				await interaction.response.edit_message(view=self)
 		else:
 			text = "You have already pressed the button!\n"
 			await interaction.user.send(text)
 			await interaction.response.edit_message(view=self)
-
 
 ##### HELP TEXT #####
 def mem_join_text():

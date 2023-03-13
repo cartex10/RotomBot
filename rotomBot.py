@@ -431,7 +431,8 @@ async def sick(ctx, sicknum):
 			for pair in clicks:
 				username = guild.get_member(pair[0]).name
 				toPrint += username + "\t\t\t" + pair[1] + "\n"
-		await guild.owner.send(toPrint + "```")
+			toPrint += "```"
+		await guild.owner.send(toPrint)
 		return
 	update_SICK(con, int(sicknum))
 	msg = await ctx.send(content = "Click the button below to put your vote in to start SICK!")
