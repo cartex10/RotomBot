@@ -434,6 +434,9 @@ async def sick(ctx, sicknum):
 			toPrint += "```"
 		await guild.owner.send(toPrint)
 		return
+	elif sicknum == "skip":
+		await PicEnd(args={"chan":ctx.channel, "con":con})
+		return
 	update_SICK(con, int(sicknum))
 	msg = await ctx.send(content = "Click the button below to put your vote in to start SICK!")
 	view = SickView(bot, ctx, msg, int(sicknum), con, arr)
