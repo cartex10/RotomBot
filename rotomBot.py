@@ -21,7 +21,7 @@ on_text = "```ACTIVATING ROTOM BOT\nVERSION 3.1 SUCCESSFULLY LOADED```"
 
 base_activity = discord.Activity(type=discord.ActivityType.listening, name="your commands!")
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix="@", status="online", activity=base_activity, intents=intents)
+bot = commands.Bot(command_prefix="$", status="online", activity=base_activity, intents=intents)
 
 global on_check
 global init_list
@@ -53,6 +53,8 @@ async def on_member_join(mem):
 
 @bot.listen('on_message')					#checks for new messages in #pick-roles
 async def register_reaction(message):
+	global con
+	global guild
 	# #pick-roles channel functionality
 	chan = discord.utils.get(guild.text_channels, name="pick-roles")
 	if message.channel == chan and not message.author.bot:
@@ -89,6 +91,19 @@ async def register_reaction(message):
 				toPrint += " (" + message.author.name + ")"
 			toPrint += ": " + message.content + "\n " + message.jump_url
 			await chan.send(toPrint)
+	# #sick channel functionality
+	chan = discord.utils.get(guild.text_channels, name="sick")
+	if message.channel == chan and not message.author.bot:
+		role = discord.utils.get(guild.roles, name="SICK")
+		#await chan.send(message.attachments[0].url)
+		if get_SICK_num(con) == 0 and role in message.role_mentions:
+			if check_entry(con, message.author.id):
+				add_entry(con, message.author.id, message.id)
+			else:
+				text = "You have already submitted an entry this SICK, only the newest entry will be considered,"
+				text += "please delete the previous entry if you haven't already so it doesn't get voted"
+				await message.author.send(text)
+				update_entry(con, message.author.id, message.id)
 
 @bot.listen('on_raw_message_delete')		#checks for deleted messages
 async def remove_reactions(payload):

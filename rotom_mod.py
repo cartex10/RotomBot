@@ -45,7 +45,13 @@ def create_connection(path):				#connect to database
 		cursor = connection.execute("SELECT id, value, clickDate, user FROM SICK")
 	except:
 		cursor = connection.execute("CREATE TABLE SICK (id INTEGER PRIMARY KEY NOT NULL, value INT NOT NULL, user INT, clickDate TEXT);")
-		connection.execute("INSERT INTO SICK VALUES (0, 0, NULL, NULL)")
+		connection.execute("INSERT INTO SICK VALUES (0, -2, NULL, NULL)")
+		connection.commit()
+	try:
+		cursor = connection.execute("SELECT id, user, message, store FROM SICK_MSG")
+	except:
+		cursor = connection.execute("CREATE TABLE SICK_MSG (id INTEGER PRIMARY KEY NOT NULL, user INT NOT NULL, message INT NOT NULL, store BOOL);")
+		connection.commit()
 	return connection
 
 def ddc_return(connection):					#get ddc from database
@@ -151,7 +157,40 @@ def clear_clicks(connection):
 	cursor.execute("DELETE FROM SICK WHERE value=-1")
 	connection.commit()
 
-##### ALARM FUNCTIONS #####
+def check_entry(connection, user): # return True if user can submit
+	cursor = connection.cursor()
+	cursor.execute("SELECT message FROM SICK_MSG WHERE user=? AND store=FALSE", (user,))
+	if len(cursor.fetchall()) == 0:
+		return True
+	else:
+		return False
+
+def add_entry(connection, user, message):
+	params = (user, message)
+	cursor = connection.cursor()
+	cursor.execute("INSERT INTO SICK_MSG VALUES (NULL, ?, ?, FALSE)", params)
+	connection.commit()
+
+def update_entry(connection, user, message):
+	cursor = connection.cursor()
+	cursor.execute("UPDATE SICK_MSG SET message=? WHERE user=?", (message, user))
+	connection.commit()
+
+def store_entries(connection, messages):
+	cursor = connection.cursor()
+	for msg in messages:
+		cursor.execute("UPDATE SICK_MSG SET store=TRUE WHERE user=? AND message=?", (msg[0], msg[1]))
+	connection.commit()
+
+def remove_entries(connection, full): #if full=False, only remove entries where store=False
+	cursor = connection.cursor()
+	if full:
+		cursor.execute("DELETE FROM SICK_MSG")
+	else:
+		cursor.execute("DELETE FROM SICK_MSG WHERE store=FALSE")
+	connection.commit()
+
+##### SICK FUNCTIONS #####
 async def EndRem(args):
 	step = args["step"]
 	chan = args["chan"]
@@ -159,26 +198,110 @@ async def EndRem(args):
 		text = "@everyone 24 hours remain for Picture entries/votes, make sure to at least check out other people's entries!"
 		await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
 	if step == 1:
-		text = "@everyone 24 hours remain for Title entries/votes, even if you can't think of you're own entry, at least vote for other's!"
+		text = "@everyone 24 hours remain for Title entries/votes, even if you can't think of your own entry, at least vote for other's!"
 		await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
 
 async def PicEnd(args):
 	chan = args["chan"]
 	con = args["con"]
-	text = "@everyone Votes are in! Please wait a little bit while votes are counted, but either way entries/votes for the server name are due "
 	date = datetime.datetime.combine((datetime.date.today() + timedelta(days=3)), datetime.time(hour=6, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
-	text += date.strftime("%A, %B %d!")
-	await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
+	winner = await FindWinner(con, chan, 0)
+	if len(winner) == 1:	# Only one pic winner
+		text = "@everyone Votes are in! The winner of the first portion of SICK is "
+		text += await GetName(winner[0][0], chan.guild) + " with this fantastic entry! Please begin submitting names, all entries and votes are due "
+		text += date.strftime("%A, %B %d! Once again, make sure to mention @SICK so I can see your submissions! ")
+		msg = await chan.fetch_message(winner[0][1])
+		text += msg.attachments[0].url
+		await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
+	else:	# Multiple pic winners
+		text = "@everyone The first portion of SICK is over, and the submissions were so good, we had a tie! "
+		text += "For the next few days, you can submit 1 entry for each of the winners, but the same voting rules apply "
+		text += "across all name submissions. Make sure to both reply to the picture your name entry is for, "
+		text += "and to mention the @SICK role for it to be counted. Votes and entries are all due "
+		text += date.strftime("%A, %B %d! ")
+		await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
+		for pair in winner:
+			text = "Here is " + await GetName(pair[0], chan.guild) + "'s entry "
+			msg = await chan.fetch_message(pair[1])
+			text += msg.attachments[0].url
+			await chan.send(content=text, reference=msg, allowed_mentions=discord.AllowedMentions(everyone=True))
 	rem_timer = Timer(2 * 24 * 360, EndRem, args={"step":1, "chan":chan})
 	fin_timer = Timer(3 * 24 * 360, NameEnd, args={"chan":chan, "con":con})
 
 async def NameEnd(args):
 	chan = args["chan"]
 	con = args["con"]
-	text = "@everyone Thank you for participating, SICK is over for now, the winner will be revealed soon!"
+	winner = await FindWinner(con, chan, 1)
+	if len(winner) == 1:	# Only one name winner
+		text = "@everyone Thank you for participating, SICK is over for now, congratulations to "
+		cursor = con.execute("SELECT COUNT(*) FROM SICK_MSG WHERE store=TRUE")
+		count = int(cursor.fetchall()[0][0])
+		if count == 1:	# Only one pic winner
+			cursor = con.cursor()
+			cursor.execute("SELECT user FROM SICK_MSG WHERE store=TRUE")
+			text += await GetName(cursor.fetchall()[0][0], chan.guild)
+		else:			# Multiple pic winners
+			msg = await chan.fetch_message(winner[0][1])
+			try:
+				msg = await chan.fetch_message(msg.reference.message_id)
+				if msg.author.bot:	# Replied to pic winner announcement
+					msg = await chan.fetch_message(msg.reference.message_id)
+				text += await GetName(msg.author.id, chan.guild)
+			except:
+				text += "ERROR"
+		text += " for their icon, and to " + await GetName(winner[0][0], chan.guild) + " for their name submission! "
+		text += "The server will be changed shortly, "
+		text += "thank you to everyone for participating, I hope to see even more amazing submissions next time!"
+	else:	# Multiple name winners
+		text = "@everyone EMERGENCY! Normally, this is where I would congratulate the winners of this SICK, "
+		text += "but it seems like the naming competition was so close this time, that there are multiple winners! "
+		text += "According to the SICK rules, naming ties are solved through ~~fights to the death~~ "
+		text += "counsel between whomever wishes to state their opinion. This is beyond my power, so I'll let you "
+		text += "guys figure it out yourselves. Either way, thank you to everyone for taking the time to submit ideas "
+		text += "for either portion of SICK, and I hope next time's submissions are just as good as this one's!"
 	await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
+	remove_entries(con, True)
 	clear_clicks(con)
-	update_SICK(con, 0)
+	update_SICK(con, -2)
+
+async def FindWinner(con, chan, step):
+	reacts = []
+	reacts.append(discord.utils.get(chan.guild.emojis, name="ok"))
+	reacts.append(discord.utils.get(chan.guild.emojis, name="yujiro_laugh"))
+	reacts.append(discord.utils.get(chan.guild.emojis, name="POGGERS"))
+	if step == 0:
+		cur = con.execute("SELECT user, message FROM SICK_MSG")
+		entries = cur.fetchall()
+	elif step == 1:
+		cur = con.execute("SELECT user, message FROM SICK_MSG WHERE store=FALSE")
+		entries = cur.fetchall()
+	winner = []
+	popularity = -1
+	for pair in entries:
+		msg = await chan.fetch_message(pair[1])
+		reactions = msg.reactions
+		temp_pop = 0
+		for reaction in reactions:
+			if reaction.emoji in reacts:
+				temp_pop += reacts.index(reaction.emoji) + 1
+			else:
+				continue
+		if temp_pop == popularity:
+			winner.append(pair)
+		elif temp_pop > popularity:
+			winner = [pair]
+			popularity = temp_pop
+	if step == 0:
+		store_entries(con, winner)
+		remove_entries(con, False)
+	return winner
+
+async def GetName(uid, guild):
+	user = discord.utils.get(guild.members, id=uid)
+	name = user.name
+	if user.nick != None:
+		name = nick
+	return name
 
 ##### VIEWS #####
 class InventoryView(discord.ui.View):
@@ -654,7 +777,8 @@ class SickView(discord.ui.View):
 				self.butt.style = discord.ButtonStyle.red
 				self.butt.label = "IT'S TIME"
 				text = "@everyone Calling all server members! It is time to decide on the future appearance of the server, "
-				text += "please send in your goofiest ideas for the next server icon, due "
+				text += "please send in your goofiest ideas for the next server icon, and make sure to mention the @SICK role "
+				text += "so your submission is counted. Everyone's entries are due "
 				date = datetime.datetime.combine((datetime.date.today() + timedelta(days=4)), datetime.time(hour=6, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
 				text += date.strftime("%A, %B %d!")
 				await interaction.response.send_message(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
