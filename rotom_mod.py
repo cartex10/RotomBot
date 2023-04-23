@@ -225,8 +225,8 @@ async def PicEnd(args):
 			msg = await chan.fetch_message(pair[1])
 			text += msg.attachments[0].url
 			await chan.send(content=text, reference=msg, allowed_mentions=discord.AllowedMentions(everyone=True))
-	rem_timer = Timer(2 * 24 * 360, EndRem, args={"step":1, "chan":chan})
-	fin_timer = Timer(3 * 24 * 360, NameEnd, args={"chan":chan, "con":con})
+	rem_timer = Timer(2 * 24 * 3600, EndRem, args={"step":1, "chan":chan})
+	fin_timer = Timer(3 * 24 * 3600, NameEnd, args={"chan":chan, "con":con})
 
 async def NameEnd(args):
 	chan = args["chan"]
@@ -782,8 +782,8 @@ class SickView(discord.ui.View):
 				date = datetime.datetime.combine((datetime.date.today() + timedelta(days=4)), datetime.time(hour=6, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
 				text += date.strftime("%A, %B %d!")
 				await interaction.response.send_message(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
-				rem_timer = Timer(3 * 24 * 360, EndRem, args={"step":0, "chan":self.ctx.channel})
-				fin_timer = Timer(4 * 24 * 360, PicEnd, args={"chan":self.ctx.channel, "con":self.con})
+				rem_timer = Timer(3 * 24 * 3600, EndRem, args={"step":0, "chan":self.ctx.channel})
+				fin_timer = Timer(4 * 24 * 3600, PicEnd, args={"chan":self.ctx.channel, "con":self.con})
 				self.stop()
 			else:
 				text = "Thank you for participating ❤️️ \n"
