@@ -190,6 +190,19 @@ def remove_entries(connection, full): #if full=False, only remove entries where 
 		cursor.execute("DELETE FROM SICK_MSG WHERE store=FALSE")
 	connection.commit()
 
+def find_entry(connection, message): # return True if message in db
+	cursor = connection.cursor()
+	cursor.execute("SELECT user FROM SICK_MSG WHERE message=?", (message,))
+	if len(cursor.fetchall()) == 0:
+		return False
+	else:
+		return True
+
+def remove_entry(connection, message):
+	cursor = connection.cursor()
+	cursor.execute("DELETE FROM SICK_MSG WHERE message=?", (message,))
+	connection.commit()
+
 ##### SICK FUNCTIONS #####
 async def EndRem(args):
 	step = args["step"]
@@ -779,11 +792,13 @@ class SickView(discord.ui.View):
 				text = "@everyone Calling all server members! It is time to decide on the future appearance of the server, "
 				text += "please send in your goofiest ideas for the next server icon, and make sure to mention the @SICK role "
 				text += "so your submission is counted. Everyone's entries are due "
-				date = datetime.datetime.combine((datetime.date.today() + timedelta(days=4)), datetime.time(hour=6, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
+				date = datetime.datetime.combine((datetime.date.today() + timedelta(days=4)), datetime.time(hour=7, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
+				delta = (date - datetime.datetime.now(tz=datetime.timezone(timedelta(hours=-5), "EST"))).total_seconds()
 				text += date.strftime("%A, %B %d!")
 				await interaction.response.send_message(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
-				rem_timer = Timer(3 * 24 * 3600, EndRem, args={"step":0, "chan":self.ctx.channel})
-				fin_timer = Timer(4 * 24 * 3600, PicEnd, args={"chan":self.ctx.channel, "con":self.con})
+				rem_timer = Timer(delta - (24 * 3600), EndRem, args={"step":0, "chan":self.ctx.channel})
+				fin_timer = Timer(delta, PicEnd, args={"chan":self.ctx.channel, "con":self.con})
+				remove_entries(self.con, True)
 				self.stop()
 			else:
 				text = "Thank you for participating ❤️️ \n"
