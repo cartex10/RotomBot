@@ -217,12 +217,12 @@ async def EndRem(args):
 async def PicEnd(args):
 	chan = args["chan"]
 	con = args["con"]
-	date = datetime.datetime.combine((datetime.date.today() + timedelta(days=3)), datetime.time(hour=6, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
+	date = datetime.datetime.combine((datetime.date.today() + timedelta(days=3)), datetime.time(hour=19, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
 	winner = await FindWinner(con, chan, 0)
 	if len(winner) == 1:	# Only one pic winner
 		text = "@everyone Votes are in! The winner of the first portion of SICK is "
 		text += await GetName(winner[0][0], chan.guild) + " with this fantastic entry! Please begin submitting names, all entries and votes are due "
-		text += date.strftime("%A, %B %d! Once again, make sure to mention @SICK so I can see your submissions! ")
+		text += date.strftime("%A, %B %d at %-I:%M %p! Once again, make sure to mention @SICK so I can see your submissions! ")
 		msg = await chan.fetch_message(winner[0][1])
 		text += msg.attachments[0].url
 		await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
@@ -231,7 +231,7 @@ async def PicEnd(args):
 		text += "For the next few days, you can submit 1 entry for each of the winners, but the same voting rules apply "
 		text += "across all name submissions. Make sure to both reply to the picture your name entry is for, "
 		text += "and to mention the @SICK role for it to be counted. Votes and entries are all due "
-		text += date.strftime("%A, %B %d! ")
+		text += date.strftime("%A, %B %d at %-I:%M %p! ")
 		await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
 		for pair in winner:
 			text = "Here is " + await GetName(pair[0], chan.guild) + "'s entry "
@@ -296,13 +296,14 @@ async def FindWinner(con, chan, step):
 		temp_pop = 0
 		for reaction in reactions:
 			if reaction.emoji in reacts:
-				temp_pop += reacts.index(reaction.emoji) + 1
+				temp_pop += reacts.index(reaction.emoji) * reaction.count + 1
 			else:
 				continue
 		if temp_pop == popularity:
 			winner.append(pair)
 		elif temp_pop > popularity:
-			winner = [pair]
+			winner = []
+			winner.append(pair)
 			popularity = temp_pop
 	if step == 0:
 		store_entries(con, winner)
@@ -313,7 +314,7 @@ async def GetName(uid, guild):
 	user = discord.utils.get(guild.members, id=uid)
 	name = user.name
 	if user.nick != None:
-		name = nick
+		name = user.nick
 	return name
 
 ##### VIEWS #####
@@ -792,9 +793,9 @@ class SickView(discord.ui.View):
 				text = "@everyone Calling all server members! It is time to decide on the future appearance of the server, "
 				text += "please send in your goofiest ideas for the next server icon, and make sure to mention the @SICK role "
 				text += "so your submission is counted. Everyone's entries are due "
-				date = datetime.datetime.combine((datetime.date.today() + timedelta(days=4)), datetime.time(hour=7, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
+				date = datetime.datetime.combine((datetime.date.today() + timedelta(days=4)), datetime.time(hour=19, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
 				delta = (date - datetime.datetime.now(tz=datetime.timezone(timedelta(hours=-5), "EST"))).total_seconds()
-				text += date.strftime("%A, %B %d!")
+				text += date.strftime("%A, %B %d at %-I:%M %p!")
 				await interaction.response.send_message(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
 				rem_timer = Timer(delta - (24 * 3600), EndRem, args={"step":0, "chan":self.ctx.channel})
 				fin_timer = Timer(delta, PicEnd, args={"chan":self.ctx.channel, "con":self.con})
