@@ -95,11 +95,11 @@ async def register_reaction(message):
 	chan = discord.utils.get(guild.text_channels, name="sick")
 	if message.channel == chan and not message.author.bot:
 		role = discord.utils.get(guild.roles, name="SICK")
-		if len(message.attachments) == 0  and role in message.role_mentions:
+		if len(message.attachments) == 0  and role in message.role_mentions and get_SICK_num(con) == 0:
 			await message.author.send("No image attachment found. Either there was an error, or you forgot to attach a picture to your submission.")
 			return
 		#await chan.send(message.attachments[0].url)
-		if get_SICK_num(con) == 0 and role in message.role_mentions:
+		if get_SICK_num(con) == -2 and role in message.role_mentions:
 			if check_entry(con, message.author.id):
 				text = "Thank you for your submission! I'll be counting the votes when the time comes, good luck and I hope everyone likes it!\n"
 				add_entry(con, message.author.id, message.id)
@@ -107,7 +107,10 @@ async def register_reaction(message):
 				text = "You have already submitted an entry this SICK, only the newest entry will be considered,"
 				text += " please delete the previous entry if you haven't already so it doesn't accumulate votes\n"
 				update_entry(con, message.author.id, message.id)
-			await message.author.send(text + message.attachments[0].url)
+			if get_SICK_num(con) == 0:
+				await message.author.send(text + message.attachments[0].url)
+			else:
+				await message.author.send(text)
 
 @bot.listen('on_raw_message_delete')		#checks for deleted messages
 async def remove_reactions(payload):

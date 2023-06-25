@@ -133,17 +133,17 @@ def set_value_from_db(connection, party, item, value):
 
 def get_SICK_num(connection):
 	cursor = connection.cursor()
-	cursor.execute("SELECT value FROM SICK WHERE value!=-1")
+	cursor.execute("SELECT value FROM SICK WHERE value!=-1 and id=0")
 	return int(cursor.fetchall()[0][0])
 
 def get_SICK_clicks(connection):
 	cursor = connection.cursor()
-	cursor.execute("SELECT user, clickDate FROM SICK WHERE value=-1")
+	cursor.execute("SELECT user, clickDate FROM SICK WHERE value=-1 and id=0")
 	return (cursor.fetchall())
 
 def update_SICK(connection, newVal):
 	cursor = connection.cursor()
-	cursor.execute("UPDATE SICK SET value=? WHERE value!=-1", (newVal,))
+	cursor.execute("UPDATE SICK SET value=? WHERE value!=-1 and id=0", (newVal,))
 	connection.commit()
 
 def add_click(connection, user, clickDate):
@@ -238,8 +238,11 @@ async def PicEnd(args):
 			msg = await chan.fetch_message(pair[1])
 			text += msg.attachments[0].url
 			await chan.send(content=text, reference=msg, allowed_mentions=discord.AllowedMentions(everyone=True))
-	rem_timer = Timer(2 * 24 * 3600, EndRem, args={"step":1, "chan":chan})
-	fin_timer = Timer(3 * 24 * 3600, NameEnd, args={"chan":chan, "con":con})
+	update_SICK(con, -2)
+	#date = datetime.datetime.combine((datetime.date.today() + timedelta(days=3)), datetime.time(hour=19, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
+	#delta = (date - datetime.datetime.now(tz=datetime.timezone(timedelta(hours=-5), "EST"))).total_seconds()
+	#rem_timer = Timer(delta - (24 * 3600), EndRem, args={"step":1, "chan":chan})
+	fin_timer = Timer(10, NameEnd, args={"chan":chan, "con":con})
 
 async def NameEnd(args):
 	chan = args["chan"]
