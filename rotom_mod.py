@@ -231,7 +231,7 @@ async def PicEnd(args):
 		text += "For the next few days, you can submit 1 entry for each of the winners, but the same voting rules apply "
 		text += "across all name submissions. Make sure to both reply to the picture your name entry is for, "
 		text += "and to mention the @SICK role for it to be counted. Votes and entries are all due "
-		text += date.strftime("%A, %B %d at %-I:%M %p! ")
+		text += date.strftime("%A, %B %d at %-I:%M %p, <t:" + str(int(date.timestamp())) + ":R>!")
 		await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
 		for pair in winner:
 			text = "Here is " + await GetName(pair[0], chan.guild) + "'s entry "
@@ -791,14 +791,12 @@ class SickView(discord.ui.View):
 			update_SICK(self.con, self.maxim - self.num)
 			if self.num == self.maxim:
 				# If maximum amount of people have "voted"
-				self.butt.style = discord.ButtonStyle.red
-				self.butt.label = "IT'S TIME"
 				text = "@everyone Calling all server members! It is time to decide on the future appearance of the server, "
 				text += "please send in your goofiest ideas for the next server icon, and make sure to mention the @SICK role "
 				text += "so your submission is counted. Everyone's entries are due "
 				date = datetime.datetime.combine((datetime.date.today() + timedelta(days=4)), datetime.time(hour=19, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
 				delta = (date - datetime.datetime.now(tz=datetime.timezone(timedelta(hours=-5), "EST"))).total_seconds()
-				text += date.strftime("%A, %B %d at %-I:%M %p!")
+				text += date.strftime("%A, %B %d at %-I:%M %p, <t:" + str(int(date.timestamp())) + ":R>!")
 				await interaction.response.send_message(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
 				rem_timer = Timer(delta - (24 * 3600), EndRem, args={"step":0, "chan":self.ctx.channel})
 				fin_timer = Timer(delta, PicEnd, args={"chan":self.ctx.channel, "con":self.con})
