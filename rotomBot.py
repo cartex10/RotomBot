@@ -46,6 +46,7 @@ async def on_ready():
 		con = create_connection("rotom_database.db")
 		await bot.tree.sync()
 		#await chan.send(on_text)
+	await check_SICK(con, guild)
 
 @bot.event									#sends introductory dm to new members
 async def on_member_join(mem):				
@@ -510,8 +511,11 @@ async def sick(ctx, sicknum):
 		await ctx.author.send(text)
 		return
 	update_SICK(con, int(sicknum))
+	if len(arr) == 0:
+		clear_clicks(con)
 	msg = await ctx.send(content = "Click the button below to put your vote in to start SICK!")
 	view = SickView(bot, ctx, msg, int(sicknum), con, arr)
+	set_SICK_chan(con, ctx.channel.id)
 	await msg.edit(view=view)
 #
 #	Misc Commands

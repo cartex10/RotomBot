@@ -133,8 +133,11 @@ def set_value_from_db(connection, party, item, value):
 
 def get_SICK_num(connection):
 	cursor = connection.cursor()
-	cursor.execute("SELECT value FROM SICK WHERE value!=-1 and id=0")
-	return int(cursor.fetchall()[0][0])
+	cursor.execute("SELECT value FROM SICK WHERE id=0")
+	string = cursor.fetchall()
+	if len(string) == 0:
+		return None
+	return int(string[0][0])
 
 def get_SICK_clicks(connection):
 	cursor = connection.cursor()
@@ -143,7 +146,66 @@ def get_SICK_clicks(connection):
 
 def update_SICK(connection, newVal):
 	cursor = connection.cursor()
-	cursor.execute("UPDATE SICK SET value=? WHERE value!=-1 and id=0", (newVal,))
+	num = get_SICK_num(connection)
+	if num is None:
+		cursor.execute("INSERT INTO SICK VALUES (0, ?, NULL, NULL)", (newVal,))
+	else:
+		cursor.execute("UPDATE SICK SET value=? WHERE value!=-1 and id=0", (newVal,))
+	connection.commit()
+
+async def check_SICK(connection, guild):
+	num = get_SICK_num(connection)
+	if num == None:
+		return
+	elif num == 0:
+		ts = get_last_click(connection)
+		if ts is None:
+			return
+		ts_dt = datetime.datetime.strptime(ts, "%m/%d/%y @ %H:%M %p")
+		tempDate = datetime.date(day=ts_dt.day, month=ts_dt.month, year=ts_dt.year)
+		now = datetime.datetime.now(tz=datetime.timezone(timedelta(hours=-5), "EST"))
+		date = datetime.datetime.combine((tempDate + timedelta(days=4)), datetime.time(hour=19, tzinfo=datetime.timezone(timedelta(hours=-5), "EST")))
+		delta = (date - now).total_seconds()
+		chan = discord.utils.get(guild.text_channels, id=get_SICK_chan(connection))
+		if delta - (24 * 3600) > 0:
+			rem_timer = Timer(delta - (24 * 3600), EndRem, args={"step":0, "chan":chan})
+		fin_timer = Timer(delta, PicEnd, args={"chan":chan, "con":connection})
+		toPrint = date.strftime("Reloaded alarms for Picture Round of SICK for %A, %B %d at %-I:%M %p, <t:" + str(int(date.timestamp())) + ":R>")
+		await guild.owner.send(toPrint)
+	elif num == -2:
+		ts = get_SICK_time(connection)
+		if ts is None:
+			return
+		ts_dt = datetime.datetime.strptime(ts, "%m/%d/%y @ %H:%M %p")
+		tempDate = datetime.date(day=ts_dt.day, month=ts_dt.month, year=ts_dt.year)
+		now = datetime.datetime.now(tz=datetime.timezone(timedelta(hours=-5), "EST"))
+		date = datetime.datetime.combine((tempDate + timedelta(days=4)), datetime.time(hour=19, tzinfo=datetime.timezone(timedelta(hours=-5), "EST")))
+		delta = (date - now).total_seconds()
+		chan = discord.utils.get(guild.text_channels, id=get_SICK_chan(connection))
+		if delta - (24 * 3600) > 0:
+			rem_timer = Timer(delta - (24 * 3600), EndRem, args={"step":1, "chan":chan})
+		fin_timer = Timer(delta, NameEnd, args={"chan":chan, "con":connection})
+		toPrint = date.strftime("Reloaded alarms for Naming Round of SICK for %A, %B %d at %-I:%M %p, <t:" + str(int(date.timestamp())) + ":R>")
+		await guild.owner.send(toPrint)
+
+def get_SICK_chan(connection):
+	cursor = connection.cursor()
+	cursor.execute("SELECT clickDate FROM SICK WHERE id=0")
+	return int(cursor.fetchall()[0][0])
+
+def set_SICK_chan(connection, newVal):
+	cursor = connection.cursor()
+	cursor.execute("UPDATE SICK SET clickDate=? WHERE id=0", (newVal,))
+	connection.commit()
+
+def get_SICK_time(connection):
+	cursor = connection.cursor()
+	cursor.execute("SELECT user FROM SICK WHERE id=0")
+	return cursor.fetchall()[0][0]
+
+def set_SICK_time(connection, new):
+	cursor = connection.cursor()
+	cursor.execute("UPDATE SICK SET user=? WHERE id=0", (new,))
 	connection.commit()
 
 def add_click(connection, user, clickDate):
@@ -154,8 +216,18 @@ def add_click(connection, user, clickDate):
 
 def clear_clicks(connection):
 	cursor = connection.cursor()
-	cursor.execute("DELETE FROM SICK WHERE value=-1")
+	cursor.execute("DELETE FROM SICK WHERE id!=0")
 	connection.commit()
+	set_SICK_time(connection, None)
+	set_SICK_chan(connection, None)
+
+def get_last_click(connection):
+	cursor = connection.cursor()
+	cursor.execute("SELECT clickDate FROM SICK WHERE id!=0")
+	try:
+		return cursor.fetchall()[-1][0]
+	except:
+		return None
 
 def check_entry(connection, user): # return True if user can submit
 	cursor = connection.cursor()
@@ -239,10 +311,12 @@ async def PicEnd(args):
 			text += msg.attachments[0].url
 			await chan.send(content=text, reference=msg, allowed_mentions=discord.AllowedMentions(everyone=True))
 	update_SICK(con, -2)
-	#date = datetime.datetime.combine((datetime.date.today() + timedelta(days=3)), datetime.time(hour=19, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
-	#delta = (date - datetime.datetime.now(tz=datetime.timezone(timedelta(hours=-5), "EST"))).total_seconds()
-	#rem_timer = Timer(delta - (24 * 3600), EndRem, args={"step":1, "chan":chan})
-	fin_timer = Timer(10, NameEnd, args={"chan":chan, "con":con})
+	now = datetime.datetime.now(tz=datetime.timezone(timedelta(hours=-5), "EST"))
+	set_SICK_time(con, now.strftime("%m/%d/%y @ %I:%M %p"))
+	date = datetime.datetime.combine((datetime.date.today() + timedelta(days=3)), datetime.time(hour=19, tzinfo=datetime.timezone(timedelta(hours=-5), "EST"))) 
+	delta = (date - datetime.datetime.now(tz=datetime.timezone(timedelta(hours=-5), "EST"))).total_seconds()
+	rem_timer = Timer(delta - (24 * 3600), EndRem, args={"step":1, "chan":chan})
+	fin_timer = Timer(delta, NameEnd, args={"chan":chan, "con":con})
 
 async def NameEnd(args):
 	chan = args["chan"]
@@ -278,7 +352,7 @@ async def NameEnd(args):
 	await chan.send(content=text, allowed_mentions=discord.AllowedMentions(everyone=True))
 	remove_entries(con, True)
 	clear_clicks(con)
-	update_SICK(con, -2)
+	update_SICK(con, -3)
 
 async def FindWinner(con, chan, step):
 	reacts = []
