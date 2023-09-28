@@ -43,7 +43,7 @@ async def on_ready():
 	await bot.change_presence(activity=base_activity, status="online")
 	if not on_check:
 		on_check = True
-		con = create_connection("rotom_database.db")
+		con = create_connection("db/rotom_database.db")
 		await bot.tree.sync()
 		#await chan.send(on_text)
 	await check_SICK(con, guild)

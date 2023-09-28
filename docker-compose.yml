@@ -1,0 +1,12 @@
+version: "3.7"
+volumes:
+  rotombot-db:
+    name: rotombot-db
+services:
+  rotombot:
+    container_name: rotombot
+    image: rotombot:latest
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - rotombot-db:/db
