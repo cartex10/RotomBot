@@ -100,7 +100,8 @@ async def register_reaction(message):
 			await message.author.send("No image attachment found. Either there was an error, or you forgot to attach a picture to your submission.")
 			return
 		#await chan.send(message.attachments[0].url)
-		if get_SICK_num(con) == -2 and role in message.role_mentions:
+		sicknum = get_SICK_num(con)
+		if sicknum == -2 or sicknum == 0 and role in message.role_mentions:
 			if check_entry(con, message.author.id):
 				text = "Thank you for your submission! I'll be counting the votes when the time comes, good luck and I hope everyone likes it!\n"
 				add_entry(con, message.author.id, message.id)
@@ -108,7 +109,7 @@ async def register_reaction(message):
 				text = "You have already submitted an entry this SICK, only the newest entry will be considered,"
 				text += " please delete the previous entry if you haven't already so it doesn't accumulate votes\n"
 				update_entry(con, message.author.id, message.id)
-			if get_SICK_num(con) == 0:
+			if sicknum == 0:
 				await message.author.send(text + message.attachments[0].url)
 			else:
 				await message.author.send(text)
